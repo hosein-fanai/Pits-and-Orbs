@@ -47,8 +47,10 @@ class PitsAndOrbsEnv(gym.Env):
     def render(self, mode="human"):
         if mode == "human":
             self.game.show_board()
-        elif mode == "rgb_array":
+        elif mode == "array":
             return self.game.board_state.copy()
+        elif mode == "obs":
+            print(self.game.get_observation())
 
     def _get_obs(self, obs):
         return OrderedDict([
