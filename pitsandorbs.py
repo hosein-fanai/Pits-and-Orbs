@@ -6,8 +6,8 @@ import os
 class PitsAndOrbs:
     DIRECTIONS = ["0.west", "1.north", "2.east", "3.south"]
     CELLS = ["0.nothing", "1.player", "2.orb", "3.pit", "4.player&orb", 
-            "5.player&pit", "6.orb&pit", "7.player&orb&pit", "8.orbs", 
-            "9.player&orbs", "10.out of bound"]
+            "5.player&pit", "6.orb&pit", "7.player&orb&pit",
+            "8.out of bound"]
     ACTIONS = ["0.turn right", "1.move forward", "2.pick orb up", 
             "3.put orb down"]
 
@@ -56,8 +56,6 @@ class PitsAndOrbs:
         self.player_direction = np.random.randint(len(PitsAndOrbs.DIRECTIONS))
         self.player_has_orb = False
         self.player_movements = 0
-
-        self.cells_with_multi_orbs = {}
 
         obs = self.get_observation()
         info = self.get_info()
@@ -152,35 +150,23 @@ class PitsAndOrbs:
     def _put_orb_down(self, reward):
         player_pos_i, player_pos_j = self.get_player_position()
 
-        if self.board_state[player_pos_i, player_pos_j] == 1:
-            self.board_state[player_pos_i, player_pos_j] = 4
-            self.player_has_orb = False
+        match self.board_state[player_pos_i, player_pos_j]:
+            case 1:
+                self.board_state[player_pos_i, player_pos_j] = 4
+                self.player_has_orb = False
 
-            reward -= 0.1
-        elif self.board_state[player_pos_i, player_pos_j] == 4:
-            self.board_state[player_pos_i, player_pos_j] = 9
-            self.player_has_orb = False
+                reward -= 0.1
+            case 4:
+                reward -= 0.05
+            case 5:
+                self.board_state[player_pos_i, player_pos_j] = 7
+                self.player_has_orb = False
 
-            self.cells_with_multi_orbs[f"{player_pos_i},{player_pos_j}"] = \
-                self.cells_with_multi_orbs.get(f"{player_pos_i},{player_pos_j}", 1) + 1
+                self._move_orbs_randomly()
 
-            reward -= 0.1
-        elif self.board_state[player_pos_i, player_pos_j] == 5:
-            self.board_state[player_pos_i, player_pos_j] = 7
-            self.player_has_orb = False
-
-            self._move_orbs_randomly()
-
-            reward += 1.
-        elif self.board_state[player_pos_i, player_pos_j] == 7:
-            reward -= 0.1
-        elif self.board_state[player_pos_i, player_pos_j] == 9:
-            self.player_has_orb = False
-
-            self.cells_with_multi_orbs[f"{player_pos_i},{player_pos_j}"] = \
-                self.cells_with_multi_orbs.get(f"{player_pos_i},{player_pos_j}", 0) + 1
-
-            reward -= 0.1
+                reward += 1.
+            case 7:
+                reward -= 0.1
 
         return reward
 
@@ -191,12 +177,9 @@ class PitsAndOrbs:
                 continue
 
             for orb_pos in zip(orb_pos_Is, orb_pos_Js):
-                k = self.cells_with_multi_orbs[f"{orb_pos[0]},{orb_pos[1]}"] if orb_cell == 8 else 1
-
-                for _ in range(k):
-                    if np.random.rand() > 0.1: # don't move this orb
-                        continue
-                    else: # randomly move this orb
+                if np.random.rand() > 0.1: # don't move this orb
+                    continue
+                else: # randomly move this orb
                         direction = np.random.randint(len(PitsAndOrbs.DIRECTIONS))
                         self._move_orb(orb_pos, direction)
 
@@ -210,13 +193,6 @@ class PitsAndOrbs:
             case 4:
                 self.board_state[orb_pos_i, orb_pos_j] = 1
                 prev_cell = 4
-            case 8:
-                if self.cells_with_multi_orbs[f"{orb_pos_i},{orb_pos_j}"] == 2:
-                    del self.cells_with_multi_orbs[f"{orb_pos_i},{orb_pos_j}"]
-                    self.board_state[orb_pos_i, orb_pos_j] = 2
-                else:
-                    self.cells_with_multi_orbs[f"{orb_pos_i},{orb_pos_j}"] -= 1
-                prev_cell = 8
 
         match direction:
             case 0: # west
@@ -236,33 +212,22 @@ class PitsAndOrbs:
             case 1:
                 self.board_state[orb_pos_i, orb_pos_j] = 4
             case 2:
-                k = f"{orb_pos_i},{orb_pos_j}"
-                self.cells_with_multi_orbs[k] = self.cells_with_multi_orbs.get(k, 1) + 1
-                self.board_state[orb_pos_i, orb_pos_j] = 8
+                self.board_state[orb_pos] = prev_cell
             case 3:
                 self.board_state[orb_pos_i, orb_pos_j] = 6
             case 4:
-                k = f"{orb_pos_i},{orb_pos_j}"
-                self.cells_with_multi_orbs[k] = self.cells_with_multi_orbs.get(k, 1) + 1
-                self.board_state[orb_pos_i, orb_pos_j] = 9
+                self.board_state[orb_pos] = prev_cell
             case 5:
                 self.board_state[orb_pos_i, orb_pos_j] = 7
             case 6:
                 self.board_state[orb_pos] = prev_cell
-                if prev_cell == 8:
-                        k = f"{orb_pos_i},{orb_pos_j}"
-                        self.cells_with_multi_orbs[k] = self.cells_with_multi_orbs.get(k, 1) + 1
-            case 8:
-                self.cells_with_multi_orbs[f"{orb_pos_i},{orb_pos_j}"] += 1
-            case 9:
-                self.cells_with_multi_orbs[f"{orb_pos_i},{orb_pos_j}"] += 1
 
     def get_observation(self):
         padded_board_state = np.zeros((self.size[0]+2, self.size[1]+2), dtype=np.uint8)
-        padded_board_state[0, :] = 10
-        padded_board_state[-1, :] = 10
-        padded_board_state[:, 0] = 10
-        padded_board_state[:, -1] = 10
+        padded_board_state[0, :] = len(PitsAndOrbs.CELLS) - 1
+        padded_board_state[-1, :] = len(PitsAndOrbs.CELLS) - 1
+        padded_board_state[:, 0] = len(PitsAndOrbs.CELLS) - 1
+        padded_board_state[:, -1] = len(PitsAndOrbs.CELLS) - 1
         padded_board_state[1:-1, 1:-1] = self.board_state
 
         player_pos_i, player_pos_j = self.get_player_position()
@@ -287,7 +252,6 @@ class PitsAndOrbs:
             "player direction": PitsAndOrbs.DIRECTIONS[self.player_direction], 
             "player has orb": self.player_has_orb,
             "player movements#": self.player_movements,
-            "cells with multiple orbs": self.cells_with_multi_orbs,
             }
   
     def get_player_position(self):
@@ -323,7 +287,7 @@ class PitsAndOrbs:
         while True:
             self.show_board(show_obs=show_obs, show_help=show_help, clear=clear)
 
-            action = int(input("Action: " ))
+            action = int(input("Next Action: " ))
             if action == 4:
                 break
 

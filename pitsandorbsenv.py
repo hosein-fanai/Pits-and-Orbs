@@ -16,10 +16,9 @@ class PitsAndOrbsEnv(gym.Env):
         self.game = PitsAndOrbs(**kwargs)
 
         self.observation_space = gym.spaces.Dict({
-            "board": gym.spaces.Box(low=0, high=10, shape=(3, 3), dtype=np.uint8),
+            "board": gym.spaces.Box(low=0, high=len(self.game.CELLS)-1, shape=(3, 3), dtype=np.uint8),
             "player_direction": gym.spaces.Discrete(4),
             "player_has_orb": gym.spaces.Discrete(2),
-            # "cells_with_multiple_orbs": gym.spaces.Box(, , shape=, ),
         })
         self.action_space = gym.spaces.Discrete(len(self.game.ACTIONS))
 
