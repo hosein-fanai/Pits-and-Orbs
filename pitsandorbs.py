@@ -270,7 +270,7 @@ class PitsAndOrbs:
             }
   
     def get_player_position(self):
-        for player_cell in (1, 4, 5, 7, 9): # all possible values for player being in a cell
+        for player_cell in (1, 4, 5, 7): # all possible values for player being in a cell
             i, j = np.where(self.board_state==player_cell)
             if i.shape != (0,) and j.shape != (0,):
                 break
