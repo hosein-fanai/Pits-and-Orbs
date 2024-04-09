@@ -82,7 +82,7 @@ class PitsAndOrbs:
 
     def _turn_right(self, reward):
         self.player_direction = (self.player_direction + 1) % len(PitsAndOrbs.DIRECTIONS)
-        reward -= (0.05 / 4)
+        # reward -= 0.05
 
         return reward
 
@@ -120,7 +120,7 @@ class PitsAndOrbs:
             case 2:
                 self.board_state[player_pos_i, player_pos_j] = 4
 
-                reward += 0.1
+                # reward += 0.1
             case 3:
                 self.board_state[player_pos_i, player_pos_j] = 5
             case 6:
@@ -131,23 +131,34 @@ class PitsAndOrbs:
         if (player_pos_i, player_pos_j) != player_pos_prev: # player actually moved
             self.player_movements += 1
 
-        reward -= 0.05
+        # reward -= 0.05
 
         return reward
 
     def _pick_orb_up(self, reward):
+        if self.player_has_orb:
+            # reward -= 0.1
+
+            return reward
+
         player_pos_i, player_pos_j = self.get_player_position()
         if self.board_state[player_pos_i, player_pos_j] == 4:
             self.board_state[player_pos_i, player_pos_j] = 1
             self.player_has_orb = True
 
-            reward += 0.5
+            # reward += 0.1
         else:
-            reward -= 0.1
+            # reward -= 0.1
+            pass
 
         return reward
 
     def _put_orb_down(self, reward):
+        if not self.player_has_orb:
+            # reward -= 0.1
+
+            return reward
+
         player_pos_i, player_pos_j = self.get_player_position()
 
         match self.board_state[player_pos_i, player_pos_j]:
@@ -155,9 +166,11 @@ class PitsAndOrbs:
                 self.board_state[player_pos_i, player_pos_j] = 4
                 self.player_has_orb = False
 
-                reward -= 0.1
+                # reward -= 0.1
+                pass
             case 4:
-                reward -= 0.05
+                # reward -= 0.05
+                pass
             case 5:
                 self.board_state[player_pos_i, player_pos_j] = 7
                 self.player_has_orb = False
@@ -166,12 +179,13 @@ class PitsAndOrbs:
 
                 reward += 1.
             case 7:
-                reward -= 0.1
+                # reward -= 0.1
+                pass
 
         return reward
 
     def _move_orbs_randomly(self):
-        for orb_cell in (2, 4, 8):
+        for orb_cell in (2, 4):
             orb_pos_Is, orb_pos_Js = np.where(self.board_state==orb_cell)
             if len(orb_pos_Is) < 1:
                 continue
@@ -249,6 +263,7 @@ class PitsAndOrbs:
 
     def get_info(self):
         return {
+            "player position": self.get_player_position(),
             "player direction": PitsAndOrbs.DIRECTIONS[self.player_direction], 
             "player has orb": self.player_has_orb,
             "player movements#": self.player_movements,

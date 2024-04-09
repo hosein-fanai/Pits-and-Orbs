@@ -5,8 +5,9 @@ from onehot_wrapper import OnehotWrapper
 from normalize_observation import NormalizeObservation
 
 
-def make_env(size=(5, 5), orb_num=5, pit_num=5, seed=None, onehot_obs=True, norm_obs=False, num_stack=None):
-    env = PitsAndOrbsEnv(size=size, orb_num=orb_num, pit_num=pit_num, seed=seed)
+def make_env(max_steps=30, size=(5, 5), orb_num=5, pit_num=5, seed=None, 
+            onehot_obs=True, norm_obs=False, num_stack=None):
+    env = PitsAndOrbsEnv(max_steps=max_steps, size=size, orb_num=orb_num, pit_num=pit_num, seed=seed)
 
     if onehot_obs:
         env = OnehotWrapper(env)
@@ -15,6 +16,6 @@ def make_env(size=(5, 5), orb_num=5, pit_num=5, seed=None, onehot_obs=True, norm
         env = NormalizeObservation(env)
 
     if num_stack:
-        env = wrappers.FrameStack(env)
+        env = wrappers.FrameStack(env, num_stack=num_stack)
 
     return env
