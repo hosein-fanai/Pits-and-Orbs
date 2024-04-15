@@ -2,6 +2,8 @@ import pygame
 
 import numpy as np
 
+import sys
+
 import os
 
 
@@ -119,7 +121,7 @@ class PitsAndOrbs:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                quit()
+                sys.exit()
             elif event.type == pygame.VIDEORESIZE:
                 width, height = event.size
                 if width != self.screen_size[0]:
