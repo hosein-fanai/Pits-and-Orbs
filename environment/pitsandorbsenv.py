@@ -53,6 +53,9 @@ class PitsAndOrbsEnv(gym.Env):
         elif mode == "obs":
             print(self.game.get_observation())
 
+    def close(self):
+        self.game.close()
+
     def _get_obs(self, obs):
         return OrderedDict([
             ("board", obs),
