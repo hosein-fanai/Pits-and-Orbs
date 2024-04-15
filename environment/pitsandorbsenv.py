@@ -4,7 +4,7 @@ import numpy as np
 
 from collections import OrderedDict
 
-from pitsandorbs import PitsAndOrbs
+from game.pitsandorbs import PitsAndOrbs
 
 
 class PitsAndOrbsEnv(gym.Env):

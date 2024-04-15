@@ -3,7 +3,7 @@ import gym
 import numpy as np
 
 
-class OnehotWrapper(gym.ObservationWrapper):
+class OnehotObservation(gym.ObservationWrapper):
 
     def __init__(self, env):
         super().__init__(env)
