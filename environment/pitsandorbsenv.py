@@ -9,10 +9,10 @@ from game.pitsandorbs import PitsAndOrbs
 
 class PitsAndOrbsEnv(gym.Env):
 
-    def __init__(self, max_steps=30, **kwargs):
+    def __init__(self, max_movements=30, **kwargs):
         super(PitsAndOrbsEnv, self).__init__()
 
-        self.max_steps = max_steps
+        self.max_movements = max_movements
 
         self.game = PitsAndOrbs(**kwargs)
 
@@ -29,11 +29,11 @@ class PitsAndOrbsEnv(gym.Env):
         return self._get_obs(obs)
 
     def step(self, action):
-        if self.game.player_movements < self.max_steps:
+        if self.game.player_movements < self.max_movements:
             obs, reward, done, info = self.game.step(action)
             observation = self._get_obs(obs)
 
-            if self.game.player_movements == self.max_steps - 1:
+            if self.game.player_movements == self.max_movements - 1:
                 done = True # truncated
 
             return observation, reward, done, info
