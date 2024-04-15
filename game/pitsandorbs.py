@@ -645,5 +645,4 @@ class PitsAndOrbs:
 
 if __name__ == "__main__":
     game = PitsAndOrbs()
-    game.player_direction = 1
     game.play()
