@@ -1,6 +1,6 @@
 from gym import wrappers
 
-from environment.pitsandorbsenv import PitsAndOrbsEnv
+from environment.pits_and_orbs_env import PitsAndOrbsEnv
 
 from wrappers.onehot_observation import OnehotObservation
 from wrappers.normalize_observation import NormalizeObservation
