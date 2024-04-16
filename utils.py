@@ -39,6 +39,7 @@ def run_agent(env, agent, max_steps=1000, fps=None,
             frames.append(frame)
 
         if done:
+            print()
             print(f"One episode is done successfully with {info['player movements#']} movements.")
             break
 
