@@ -64,7 +64,7 @@ python3 -m pip install tensorflow==2.10.0
 And stable-baselines3 requires you to:
 
 ```bash
-python3 -m pip install stable-baselines3==1.8.0
+python3 -m pip install stable-baselines3==1.8.0 tensorboard
 ```
 
 ## CLI Usage
