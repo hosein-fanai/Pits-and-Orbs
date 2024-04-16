@@ -17,7 +17,7 @@ env = make_env(num_stack=4, pygame_mode=True)
 agent = Agent(env, model_path)
 
 print()
-print("Using the agent located it:", model_path)
+print("Using the agent located at:", model_path)
 print()
 
 rewards, frames = run_agent(env, agent, return_frames=True)
