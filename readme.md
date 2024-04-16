@@ -13,7 +13,7 @@ python3 ./game/setup.py bdist_msi
 
 For illustration purposes, if the ```pygame_with_help``` argument is set to ```True```, the PyGame window will have extra height to show players' movements and a guid to what every possible coloring and shapes mean.
 
-![](https://github.com/hosein-fanai/Pits-and-Orbs/blob/main/materials/screenshot.gif?raw=true "A sample screenshot of the starting point of the PyGame Window mode with help showed.")
+![](https://github.com/hosein-fanai/Pits-and-Orbs/blob/main/materials/screenshot.jpg?raw=true "A sample screenshot of the starting point of the PyGame Window mode with help showed.")
 
 As a reminder, the ```utils.make_env``` function is the best and easiest way to create a gym environment out of this game since it provides decent default parameters to train the environment for an RL algorithm.
 
