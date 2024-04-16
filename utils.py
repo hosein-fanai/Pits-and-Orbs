@@ -39,15 +39,15 @@ def run_agent(env, agent, max_steps=1000, fps=None,
             frames.append(frame)
 
         if done:
+            print(f"One episode is done successfully with {info['player movements#']} movements.")
             break
 
         if fps is not None:
             env.game.clock.tick(fps)
 
     print()
-    print("One episode is done with the fps of", int(frames_counter/(time.time()-start)))
+    print("The episode was fps:", int(frames_counter/(time.time()-start)))
     print("The episode length was:", step+1)
-    print(f"Player used {info['player movements#']} movements.")
 
     return rewards, frames
 
