@@ -564,6 +564,9 @@ class PitsAndOrbs:
         obs = self.get_observation()
         info = self.get_info()
 
+        if self._pygame_mode:
+            self._update_screen()
+
         return obs, info
 
     def get_observation(self):
