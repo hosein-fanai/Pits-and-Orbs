@@ -581,6 +581,13 @@ class PitsAndOrbs:
 
         return obs
 
+    def get_frame(self):
+        assert self._pygame_mode
+
+        frame = np.transpose(pygame.surfarray.array3d(self.screen), (1, 0, 2))
+
+        return frame
+
     def compute_current_reward(self):
         return 0
 

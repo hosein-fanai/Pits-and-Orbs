@@ -48,10 +48,13 @@ class PitsAndOrbsEnv(gym.Env):
     def render(self, mode="human"):
         if mode == "human":
             self.game.show_board()
-        elif mode == "array":
-            return self.game.board_state.copy()
+        elif mode == "rgb_array":
+            if self.game._pygame_mode:
+                return self.game.get_frame()
+            else:
+                return self.game.board_state.copy()
         elif mode == "obs":
-            print(self.game.get_observation())
+            return self.game.get_observation()
 
     def close(self):
         self.game.close()
@@ -65,5 +68,4 @@ class PitsAndOrbsEnv(gym.Env):
 
     def _get_info(self):
         return self.game.get_info()
-
 
