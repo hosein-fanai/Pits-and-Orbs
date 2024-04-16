@@ -23,10 +23,10 @@ def run_agent(env, agent, max_steps=1000, fps=None,
     frames_counter = 0
     
     start = time.time()
-    for _ in range(max_steps):
+    for step in range(max_steps):
         action = agent.predict(obs, deterministic=deterministic_action_choice)
 
-        obs, reward, done, _ = env.step(action)
+        obs, reward, done, info = env.step(action)
 
         rewards += reward
         frames_counter += 1
@@ -45,7 +45,9 @@ def run_agent(env, agent, max_steps=1000, fps=None,
             env.game.clock.tick(fps)
 
     print()
-    print(f"1 Episode is done with the fps of {int(frames_counter/(time.time()-start))}")
+    print("One episode is done with the fps of", int(frames_counter/(time.time()-start)))
+    print("The episode length was:", step+1)
+    print(f"Player used {info['player movements#']} movements.")
 
     return rewards, frames
 
