@@ -50,6 +50,7 @@ class PitsAndOrbsEnv(gym.Env):
             self.game.show_board()
         elif mode == "rgb_array":
             if self.game._pygame_mode:
+                self.game._update_screen()
                 return self.game.get_frame()
             else:
                 return self.game.board_state.copy()
