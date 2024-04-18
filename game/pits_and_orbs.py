@@ -31,64 +31,6 @@ class PitsAndOrbs:
         self.epsilon = 1e-5
         self.frame_time = 1 / 60        
 
-    def play1(self, show_obs_or_state_or_both=0, show_help=True, clear=True): # input=4 quits the game
-        rewards = 0
-
-        while True:
-            self.show_board(show_obs_or_state_or_both=show_obs_or_state_or_both, 
-                            show_help=show_help, clear=clear)
-
-            action = int(input("Next Action: "))
-            if action == 4:
-                print("Quiting the game ...")
-                break
-
-            _, reward, done, _ = self.step(action)
-            rewards += reward
-
-            print("Taken reward for last action:", reward)
-            print("All rewards until now:", rewards)
-            print()
-
-            if done:
-                print(f"Game ended successfully with {self.player_movements} movements.")
-                break
-
-    def play2(self, show_obs_or_state_or_both=0, show_help=False, clear=False, print_is_enabled=True): # play function for pygame
-        obs = None
-        rewards = 0
-        done = False
-        info = None
-        if print_is_enabled:
-            self.show_board(obs=obs, info=info, 
-                            show_obs_or_state_or_both=show_obs_or_state_or_both, 
-                            show_help=show_help, clear=clear)
-
-        while True:
-            self._update_screen()
-
-            action = self._check_events()
-
-            if action is not None and not done:
-                obs, reward, done, info = self.step(action)
-                rewards += reward
-
-                if print_is_enabled:
-                    self.show_board(obs=obs, info=info, 
-                                    show_obs_or_state_or_both=show_obs_or_state_or_both, 
-                                    show_help=show_help, clear=clear)
-
-                    print("Taken reward for last action:", reward)
-                    print("All rewards until now:", rewards)
-                    print()
-
-                    if done and not self.printed_game_is_finished:
-                        print(f"Game ended successfully with {self.player_movements} movements.")
-                        self._build_finish_materials()
-                        self.printed_game_is_finished = True
-
-            self.clock.tick(1/self.frame_time)
-
     def _check_events(self):
         action = None
 
@@ -496,6 +438,64 @@ class PitsAndOrbs:
                 self.board_state[orb_pos_i, orb_pos_j] = 7
             case 6:
                 self.board_state[orb_pos] = prev_cell
+
+    def play1(self, show_obs_or_state_or_both=0, show_help=True, clear=True): # input=4 quits the game
+        rewards = 0
+
+        while True:
+            self.show_board(show_obs_or_state_or_both=show_obs_or_state_or_both, 
+                            show_help=show_help, clear=clear)
+
+            action = int(input("Next Action: "))
+            if action == 4:
+                print("Quiting the game ...")
+                break
+
+            _, reward, done, _ = self.step(action)
+            rewards += reward
+
+            print("Taken reward for last action:", reward)
+            print("All rewards until now:", rewards)
+            print()
+
+            if done:
+                print(f"Game ended successfully with {self.player_movements} movements.")
+                break
+
+    def play2(self, show_obs_or_state_or_both=0, show_help=False, clear=False, print_is_enabled=True): # play function for pygame
+        obs = None
+        rewards = 0
+        done = False
+        info = None
+        if print_is_enabled:
+            self.show_board(obs=obs, info=info, 
+                            show_obs_or_state_or_both=show_obs_or_state_or_both, 
+                            show_help=show_help, clear=clear)
+
+        while True:
+            self._update_screen()
+
+            action = self._check_events()
+
+            if action is not None and not done:
+                obs, reward, done, info = self.step(action)
+                rewards += reward
+
+                if print_is_enabled:
+                    self.show_board(obs=obs, info=info, 
+                                    show_obs_or_state_or_both=show_obs_or_state_or_both, 
+                                    show_help=show_help, clear=clear)
+
+                    print("Taken reward for last action:", reward)
+                    print("All rewards until now:", rewards)
+                    print()
+
+                    if done and not self.printed_game_is_finished:
+                        print(f"Game ended successfully with {self.player_movements} movements.")
+                        self._build_finish_materials()
+                        self.printed_game_is_finished = True
+
+            self.clock.tick(1/self.frame_time)
 
     def step(self, action):
         reward = self._do_action(action)
