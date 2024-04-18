@@ -15,7 +15,8 @@ class PitsAndOrbs:
     ACTIONS = ["0.turn right", "1.move forward", "2.pick orb up", 
             "3.put orb down"]
 
-    def __init__(self, size=(5, 5), orb_num=5, pit_num=5, seed=None, pygame_mode=True, pygame_with_help=True):
+    def __init__(self, size=(5, 5), orb_num=5, pit_num=5, seed=None, 
+                pygame_mode=True, pygame_with_help=True):
         assert len(size) == 2
         self.size = size
 
@@ -23,39 +24,12 @@ class PitsAndOrbs:
         self.orb_num = orb_num
         self.pit_num = pit_num
 
-        self.epsilon = 1e-5
-        self.frame_time = 1 / 60
-
+        self.seed = seed
         self._pygame_mode = pygame_mode
         self._pygame_with_help = pygame_with_help
-        if pygame_mode:
-            pygame.init()
 
-            self.multiplier = 100
-            self.border_color = (255, 120, 0)
-            self.border_width = 3
-            self.border_margin = self.multiplier - (1.5 * self.border_width)
-
-            self.play = self.play2
-
-            self.screen_size = (
-                self.size[0]*self.multiplier, 
-                (self.size[1]+(3 if self._pygame_with_help else 0))*self.multiplier
-            )
-            self.screen = pygame.display.set_mode(size=self.screen_size, 
-                                                flags=pygame.RESIZABLE)
-            self.screen_rect = self.screen.get_rect()
-            self.screen_dims = self.screen_rect.size
-
-            self.clock = pygame.time.Clock()
-            self.font = pygame.font.SysFont(None, int(0.5*self.multiplier))
-            self.smaller_font = pygame.font.SysFont(None, int(0.15*self.multiplier))
-
-            pygame.display.set_caption("Pits and Orbs")
-        else:
-            self.play = self.play1
-
-        self.reset(seed=seed)
+        self.epsilon = 1e-5
+        self.frame_time = 1 / 60        
 
     def play1(self, show_obs_or_state_or_both=0, show_help=True, clear=True): # input=4 quits the game
         rewards = 0
@@ -527,13 +501,47 @@ class PitsAndOrbs:
         reward = self._do_action(action)
 
         obs = self.get_observation()
-        reward += self.compute_current_reward()
         done = self.is_done()
         info = self.get_info()
 
         return obs, reward, done, info
 
-    def reset(self, seed=None):
+    def reset_game(self, seed=None):
+        seed = self.seed if seed is None else seed
+
+        if self._pygame_mode:
+            pygame.init()
+
+            self.multiplier = 100
+            self.border_color = (255, 120, 0)
+            self.border_width = 3
+            self.border_margin = self.multiplier - (1.5 * self.border_width)
+
+            self.play = self.play2
+
+            try:
+                icon = pygame.image.load("./game/pao.ico")
+            except:
+                icon = pygame.image.load("./pao.ico")
+            pygame.display.set_icon(icon)
+
+            self.screen_size = (
+                self.size[0]*self.multiplier, 
+                (self.size[1]+(3 if self._pygame_with_help else 0))*self.multiplier
+            )
+            self.screen = pygame.display.set_mode(size=self.screen_size, 
+                                                flags=pygame.RESIZABLE)
+            self.screen_rect = self.screen.get_rect()
+            self.screen_dims = self.screen_rect.size
+
+            self.clock = pygame.time.Clock()
+            self.font = pygame.font.SysFont(None, int(0.5*self.multiplier))
+            self.smaller_font = pygame.font.SysFont(None, int(0.15*self.multiplier))
+
+            pygame.display.set_caption("Pits and Orbs")
+        else:
+            self.play = self.play1
+
         np.random.seed(seed)
 
         self.printed_game_is_finished = False
@@ -591,9 +599,6 @@ class PitsAndOrbs:
 
         return frame
 
-    def compute_current_reward(self):
-        return 0
-
     def is_done(self):
         cell_type6_num = len(np.where(self.board_state==6)[0])
         cell_type7_num = len(np.where(self.board_state==7)[0])
@@ -648,7 +653,7 @@ class PitsAndOrbs:
             print("Actions:", PitsAndOrbs.ACTIONS)
             print()
        
-    def close(self):
+    def close_game(self):
         if self._pygame_mode:
             self.board_state = None
     
@@ -657,4 +662,5 @@ class PitsAndOrbs:
 
 if __name__ == "__main__":
     game = PitsAndOrbs()
+    game.reset_game()
     game.play()

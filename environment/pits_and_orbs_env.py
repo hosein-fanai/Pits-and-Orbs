@@ -24,7 +24,7 @@ class PitsAndOrbsEnv(gym.Env):
         self.action_space = gym.spaces.Discrete(len(self.game.ACTIONS))
 
     def reset(self, seed=None, options=None):
-        obs, info = self.game.reset(seed=seed)
+        obs, info = self.game.reset_game(seed=seed)
 
         return self._get_obs(obs)
 
@@ -58,7 +58,7 @@ class PitsAndOrbsEnv(gym.Env):
             return self.game.get_observation()
 
     def close(self):
-        self.game.close()
+        self.game.close_game()
 
     def _get_obs(self, obs):
         return OrderedDict([
