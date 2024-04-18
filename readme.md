@@ -1,6 +1,6 @@
 # Pits and Orbs Environment as a Multi-Agents System
 ## Description
-A simple game written from scratch in Python that has two modes: Terminal Printing and PyGame Window. To switch between these modes simply change this argument as follows: ```pygame_mode=True``` to have a nice PyGame enabling you to play the game manually. The environment only allows players (or agents) to take 4 types of actions: ```Turn Right - Move Forward - Pick Orb Up - Put Orb Down```. It is obvious that ```Move Forward``` action means that the player moves to the next cell in the direction that it is in without crossing the boundaries. This argument is available in various files, classes, and functions, such as ```game.pits_and_orbs.PitsAndOrbs```, ```environment.pits_and_orbs_env.PitsAndOrbsEnv``` and ```utils.make_env```. To build the game simply use the following:
+A simple game written from scratch in Python having two modes: Terminal Printing and PyGame Window Rendering. To switch between these modes simply change this argument as follows: ```pygame_mode=True``` to have a nice PyGame enabling you to play the game manually. This argument is available in various files, classes, and functions, such as ```game.pits_and_orbs.PitsAndOrbs```, ```environment.pits_and_orbs_env.PitsAndOrbsEnv``` and ```utils.make_env```. The environment only allows players (or agents) to take 4 types of actions: ```Turn Right - Move Forward - Pick Orb Up - Put Orb Down```. It is obvious that ```Move Forward``` action means that the player moves to the next cell in the direction that it is in without crossing the boundaries. The challenging part of training an agent is that this environment is partially observable which means that the agent only has access to its eight neighbors, but not the whole state board (a 2D array). A memory is implemented to appease this matter. The memory tries to save each new cells that the agent sees after getting partial observation. To build the game simply use the following:
 
 ```bash
 python3 ./game/setup.py build
@@ -45,14 +45,16 @@ virtual_display = Display(visible=0, size=(1400, 900))
 virtual_display.start()
 ```
 
-
 ## Installation
-To use the game and its environment you can install the below necessary dependencies in a new virtual environment (all the materials are tested in Python=3.10.10), but these do not include the usages for RL agents.
+To use the game and its environment you can install the below necessary dependencies in a new virtual environment (all the materials are tested in Python=3.10.10), but these do not include the usages for RL agents. First create and activate a new environment or just skip this part (if you are using a headless server like Colab make sure to go through with the last section's guide in your dev environment).
 
 ```bash
 python3 venv -env pae_env
 source pae_env/bin/activate
+```
+Then, install project's dependencies for rendering it on a PyGame window.
 
+```bash
 python3 -m pip install -r requirements.txt
 ```
 
@@ -61,6 +63,7 @@ To use RL models you should either install TensorFlow or Stable Baselines3 which
 ```bash
 python3 -m pip install tensorflow==2.10.0
 ```
+
 And stable-baselines3 requires you to:
 
 ```bash
@@ -68,10 +71,18 @@ python3 -m pip install stable-baselines3==1.8.0 tensorboard
 ```
 
 ## CLI Usage
-The below CLI is used for running a certain RL model on the environment and saving the PyGame frames to a .gif file.
+The CLI is used for running a certain RL model on the environment and saving the PyGame rendered frames to a .gif file.
 
 ```bash
 python3 ./ "path to the model" "path to save the gif file"
+```
+For headless servers use this CLI (make sure you have installed xfvb thoroughly):
+```bash
+xvfb-run -s "-screen 0 1400x900x24" python3 ./ "path to the model" "path to save the gif file"
+```
+For more information use CLI's help command:
+```bash
+python3 ./ -h
 ```
 
 ### .gif file example
