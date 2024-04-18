@@ -21,7 +21,7 @@ As a reminder, the ```utils.make_env``` function is the best and easiest way to 
 To load the project use the following logic:
 
 ```bash
-git clone -depth 1 https://github.com/hosein-fanai/Pits-and-Orbs.git
+git clone --depth 1 https://github.com/hosein-fanai/Pits-and-Orbs.git
 cd "Pits-and-Orbs"
 ```
 
