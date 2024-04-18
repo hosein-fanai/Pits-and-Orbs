@@ -75,12 +75,12 @@ class PitsAndOrbsEnv(gym.Env):
 
 
 # if __name__ == "__main__":
-    env = PitsAndOrbsEnv()
-    obs = env.reset()
+#     env = PitsAndOrbsEnv()
+#     obs = env.reset()
 
-    for _ in range(1000):
-        action = env.action_space.sample()
-        obs, reward, done, info = env.step(action)
+#     for _ in range(1000):
+#         action = env.action_space.sample()
+#         obs, reward, done, info = env.step(action)
 
-        if done:
-            break
+#         if done:
+#             break

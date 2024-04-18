@@ -34,7 +34,7 @@ class PitsAndOrbs:
         self.epsilon = 1e-5
         self.frame_time = 1 / 60
 
-        self.memories = [Memory(self)]  
+        self.memories = [Memory(self)]
 
     def _check_events(self):
         action = None
@@ -681,6 +681,6 @@ class PitsAndOrbs:
 
 
 # if __name__ == "__main__":
-    game = PitsAndOrbs()
-    game.reset_game()
-    game.play()
+#     game = PitsAndOrbs()
+#     game.reset_game()
+#     game.play()
