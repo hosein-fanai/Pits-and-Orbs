@@ -6,7 +6,10 @@ import sys
 
 import os
 
-from game.memory import Memory
+try:
+    from game.memory import Memory
+except:
+    from memory import Memory
 
 
 class PitsAndOrbs:
@@ -62,7 +65,7 @@ class PitsAndOrbs:
                         action = 3
                     case pygame.K_q:
                         pygame.quit()
-                        quit()                      
+                        sys.exit()                     
 
         return action
 
@@ -680,7 +683,7 @@ class PitsAndOrbs:
             pygame.quit()
 
 
-# if __name__ == "__main__":
-#     game = PitsAndOrbs()
-#     game.reset_game()
-#     game.play()
+if __name__ == "__main__":
+    game = PitsAndOrbs()
+    game.reset_game()
+    game.play()

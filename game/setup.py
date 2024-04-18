@@ -3,7 +3,12 @@ from cx_Freeze import setup, Executable
 import sys
 
 
-build_options = {"packages": ["pygame"], "excludes": ["tkinter"], "include_files": ["./game/pao.ico"]}
+build_options = {
+    "packages": ["pygame"], 
+    "excludes": ["tkinter"], 
+    "include_files": ["./game/pao.ico"],
+    "build_exe": "./game/build",
+}
 
 base = "Win32GUI" if sys.platform == "win32" else None
 
@@ -24,6 +29,7 @@ msi_data = {
 bdist_msi_options = {
     "data": msi_data,
     "initial_target_dir": r"[ProgramFilesFolder]\Pits and Orbs",
+    "install_icon": "./game/pao.ico",
 }
 
 setup(
@@ -31,7 +37,7 @@ setup(
     version="0.2.0",
     description="A simple game (environment) written in PyGame from scratch by EchineF to demonstrate a multi-agent system.",
     author_email="hosein.fanai@gmail.com",
-    download_url="https://github.com/hosein-fanai/Pits-and-Orbs/game/dist/Pits%20and%20Orbs-0.2.0-win64.msi",
+    download_url="https://github.com/hosein-fanai/Pits-and-Orbs/game/Pits%20and%20Orbs-0.2.0-win64.msi",
     options = {
         "build_exe": build_options,
         "bdist_msi": bdist_msi_options,

@@ -4,7 +4,17 @@ import numpy as np
 
 from collections import OrderedDict
 
-from game.pits_and_orbs import PitsAndOrbs
+try:
+    from game.pits_and_orbs import PitsAndOrbs
+except:
+    import sys
+    import os
+
+    current_directory = os.path.dirname(os.path.realpath(__file__))
+    parent_directory = os.path.dirname(current_directory)
+    sys.path.append(os.path.abspath(parent_directory))
+
+    from game.pits_and_orbs import PitsAndOrbs
 
 
 class PitsAndOrbsEnv(gym.Env):
@@ -74,13 +84,20 @@ class PitsAndOrbsEnv(gym.Env):
         return self.game.get_info()
 
 
-# if __name__ == "__main__":
-#     env = PitsAndOrbsEnv()
-#     obs = env.reset()
+if __name__ == "__main__":
+    env = PitsAndOrbsEnv()
+    obs = env.reset()
+    print(obs)
+    print()
 
-#     for _ in range(1000):
-#         action = env.action_space.sample()
-#         obs, reward, done, info = env.step(action)
+    for _ in range(10):
+        action = env.action_space.sample()
+        obs, reward, done, info = env.step(action)
 
-#         if done:
-#             break
+        print("Action:", action)
+        print(obs)
+        print("Reward:", reward)
+        print()
+
+        if done:
+            break
