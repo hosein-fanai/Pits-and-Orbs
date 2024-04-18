@@ -6,6 +6,8 @@ import sys
 
 import os
 
+from game.memory import Memory
+
 
 class PitsAndOrbs:
     DIRECTIONS = ["0.west", "1.north", "2.east", "3.south"]
@@ -16,7 +18,7 @@ class PitsAndOrbs:
             "3.put orb down"]
 
     def __init__(self, size=(5, 5), orb_num=5, pit_num=5, seed=None, 
-                pygame_mode=True, pygame_with_help=True):
+                pygame_mode=True, pygame_with_help=True, show_partial_obs=True):
         assert len(size) == 2
         self.size = size
 
@@ -27,9 +29,12 @@ class PitsAndOrbs:
         self.seed = seed
         self._pygame_mode = pygame_mode
         self._pygame_with_help = pygame_with_help
+        self._show_partial_obs = show_partial_obs
 
         self.epsilon = 1e-5
-        self.frame_time = 1 / 60        
+        self.frame_time = 1 / 60
+
+        self.memories = [Memory(self)]  
 
     def _check_events(self):
         action = None
@@ -77,9 +82,14 @@ class PitsAndOrbs:
         pygame.display.flip()
 
     def _display_objects(self):
+        if self._show_partial_obs:
+            board = self.memories[0].get()
+        else:
+            board = self.board_state
+
         for i in range(self.size[0]):
             for j in range(self.size[1]):
-                cell_type = self.board_state[i, j]
+                cell_type = board[i, j]
                 if cell_type == 0:
                     continue
                 elif cell_type == 1:
@@ -439,11 +449,12 @@ class PitsAndOrbs:
             case 6:
                 self.board_state[orb_pos] = prev_cell
 
-    def play1(self, show_obs_or_state_or_both=0, show_help=True, clear=True): # input=4 quits the game
+    def play1(self, show_obs_or_state=0, show_help=True, 
+                clear=True): # input=4 quits the game
         rewards = 0
 
         while True:
-            self.show_board(show_obs_or_state_or_both=show_obs_or_state_or_both, 
+            self.show_board(show_obs_or_state=show_obs_or_state, 
                             show_help=show_help, clear=clear)
 
             action = int(input("Next Action: "))
@@ -462,14 +473,15 @@ class PitsAndOrbs:
                 print(f"Game ended successfully with {self.player_movements} movements.")
                 break
 
-    def play2(self, show_obs_or_state_or_both=0, show_help=False, clear=False, print_is_enabled=True): # play function for pygame
+    def play2(self, show_obs_or_state=0, show_help=False, 
+            clear=False, print_is_enabled=True): # play function for pygame
         obs = None
         rewards = 0
         done = False
         info = None
         if print_is_enabled:
             self.show_board(obs=obs, info=info, 
-                            show_obs_or_state_or_both=show_obs_or_state_or_both, 
+                            show_obs_or_state=show_obs_or_state, 
                             show_help=show_help, clear=clear)
 
         while True:
@@ -483,7 +495,7 @@ class PitsAndOrbs:
 
                 if print_is_enabled:
                     self.show_board(obs=obs, info=info, 
-                                    show_obs_or_state_or_both=show_obs_or_state_or_both, 
+                                    show_obs_or_state=show_obs_or_state, 
                                     show_help=show_help, clear=clear)
 
                     print("Taken reward for last action:", reward)
@@ -500,9 +512,10 @@ class PitsAndOrbs:
     def step(self, action):
         reward = self._do_action(action)
 
-        obs = self.get_observation()
         done = self.is_done()
         info = self.get_info()
+
+        obs = self.get_partial_obs_with_mem(info)
 
         return obs, reward, done, info
 
@@ -569,15 +582,15 @@ class PitsAndOrbs:
         self.player_has_orb = False
         self.player_movements = 0
 
-        obs = self.get_observation()
         info = self.get_info()
+        obs = self.get_partial_obs_with_mem(info)
 
         if self._pygame_mode:
             self._update_screen()
 
         return obs, info
 
-    def get_observation(self):
+    def get_neighbors(self):
         padded_board_state = np.zeros((self.size[0]+2, self.size[1]+2), dtype=np.uint8)
         padded_board_state[0, :] = len(PitsAndOrbs.CELLS) - 1
         padded_board_state[-1, :] = len(PitsAndOrbs.CELLS) - 1
@@ -591,6 +604,17 @@ class PitsAndOrbs:
         obs = padded_board_state[player_pos_i-1:player_pos_i+2, player_pos_j-1:player_pos_j+2]
 
         return obs
+
+    def get_partial_obs_with_mem(self, info):
+        player_index = 0
+        player_pos = info["player position"]
+
+        neighbors = self.get_neighbors()
+
+        self.memories[player_index].update(neighbors, player_pos)
+        partial_obs_with_mem = self.memories[player_index].get()
+
+        return partial_obs_with_mem
 
     def get_frame(self):
         assert self._pygame_mode
@@ -625,25 +649,21 @@ class PitsAndOrbs:
     def clear_screen(self):
         os.system("cls" if os.name=="nt" else "clear")
 
-    def show_board(self, obs=None, info=None, show_obs_or_state_or_both=0, show_help=True, clear=True):
-        obs = obs if obs is not None else self.get_observation()
+    def show_board(self, obs=None, info=None, show_obs_or_state=0, 
+                    show_help=True, clear=True): # show_obs_or_state=0 prints observation and show_obs_or_state=1 prints state
         info = info if info is not None else self.get_info()
+        obs = obs if obs is not None else self.get_partial_obs_with_mem(info)
 
         if clear:
             self.clear_screen()
 
-        if show_obs_or_state_or_both == 0:
+        if show_obs_or_state == 0:
             print(obs)
             print()
-        elif show_obs_or_state_or_both == 1:
+        elif show_obs_or_state == 1:
             print(self.board_state)
             print()
-        elif show_obs_or_state_or_both == 2:
-            print(self.board_state)
-            print()
-            print(obs)
-            print()
-        
+
         print(info)
         print()
 
@@ -660,7 +680,7 @@ class PitsAndOrbs:
             pygame.quit()
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     game = PitsAndOrbs()
     game.reset_game()
     game.play()
