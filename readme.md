@@ -3,12 +3,12 @@
 A simple game written from scratch in Python having two modes: Terminal Printing and PyGame Window Rendering. To switch between these modes simply change this argument as follows: ```pygame_mode=True``` to have a nice PyGame enabling you to play the game manually. This argument is available in various files, classes, and functions, such as ```game.pits_and_orbs.PitsAndOrbs```, ```environment.pits_and_orbs_env.PitsAndOrbsEnv``` and ```utils.make_env```. The environment only allows players (or agents) to take 4 types of actions: ```Turn Right - Move Forward - Pick Orb Up - Put Orb Down```. It is obvious that ```Move Forward``` action means that the player moves to the next cell in the direction that it is in without crossing the boundaries. The challenging part of training an agent is that this environment is partially observable which means that the agent only has access to its eight neighbors, but not the whole state board (a 2D array). A memory is implemented to appease this matter. The memory tries to save each new cells that the agent sees after getting partial observation. To build the game simply use the following:
 
 ```bash
-python3 ./game/setup.py build
+python3 game/setup.py build
 ```
 
 or create an installer while building the game:
 ```bash
-python3 ./game/setup.py bdist_msi
+python3 game/setup.py bdist_msi
 ```
 
 For illustration purposes, if the ```pygame_with_help``` argument is set to ```True```, the PyGame window will have extra height to show players' movements and a guide to what every possible coloring and shapes mean.
@@ -74,15 +74,15 @@ python3 -m pip install stable-baselines3==1.8.0 tensorboard
 The CLI is used for running a certain RL model on the environment and saving the PyGame rendered frames to a .gif file.
 
 ```bash
-python3 ./ "path to the model" "path to save the gif file"
+python3 . "path to the model" "path to save the gif file"
 ```
 For headless servers use this CLI (make sure you have installed xfvb thoroughly):
 ```bash
-xvfb-run -s "-screen 0 1400x900x24" python3 ./ "path to the model" "path to save the gif file"
+xvfb-run -s "-screen 0 1400x900x24" python3 . "path to the model" "path to save the gif file"
 ```
 For more information use CLI's help command:
 ```bash
-python3 ./ -h
+python3 . -h
 ```
 
 ### .gif file example
