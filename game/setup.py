@@ -3,7 +3,7 @@ from cx_Freeze import setup, Executable
 import sys
 
 
-build_options = {"packages": ["pygame"], "excludes": ["tkinter"]}
+build_options = {"packages": ["pygame"], "excludes": ["tkinter"], "include_files": ["./pae.ico"]}
 
 base = "Win32GUI" if sys.platform == "win32" else None
 
