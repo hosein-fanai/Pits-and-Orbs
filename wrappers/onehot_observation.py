@@ -8,9 +8,11 @@ class OnehotObservation(gym.ObservationWrapper):
     def __init__(self, env):
         super().__init__(env)
 
-        self.observation_space = gym.spaces.Box(low=0, high=1, 
-                                            shape=(3*3*len(env.game.CELLS)+4+1,), 
-                                            dtype=np.float32)
+        self.observation_space = gym.spaces.Box(
+            low=0, high=1,                                 
+            shape=(env.game.size[0]*env.game.size[1]*len(env.game.CELLS)+4+1,), 
+            dtype=np.float32
+        )
 
     def observation(self, observation):
         onehot_board = self._onehot(observation["board"], depth=len(self.env.game.CELLS)).flatten()
