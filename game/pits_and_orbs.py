@@ -15,8 +15,7 @@ except:
 class PitsAndOrbs:
     DIRECTIONS = ["0.west", "1.north", "2.east", "3.south"]
     CELLS = ["0.nothing", "1.player", "2.orb", "3.pit", "4.player&orb", 
-            "5.player&pit", "6.orb&pit", "7.player&orb&pit",
-            "8.out of bound"]
+            "5.player&pit", "6.orb&pit", "7.player&orb&pit"] # , "8.out of bound"
     ACTIONS = ["0.turn right", "1.move forward", "2.pick orb up", 
             "3.put orb down"]
 
