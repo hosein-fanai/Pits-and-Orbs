@@ -41,7 +41,10 @@ def run_agent(env, agent, max_steps=1000, fps=None,
 
         if done:
             print()
-            print(f"One episode is done successfully with {info['player movements#']} movements.")
+            print("One episode is done successfully with ", end="")
+            for i in range(env.game.player_num):
+                print(f"player{i} having done {info[f'player{i} movements#']} movements ", end="")
+            print()
             break
 
         if fps is not None:
