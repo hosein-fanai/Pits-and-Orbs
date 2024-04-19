@@ -19,24 +19,24 @@ class PitsAndOrbs:
     ACTIONS = ["0.turn right", "1.move forward", "2.pick orb up", 
             "3.put orb down"]
 
-    def __init__(self, size=(5, 5), orb_num=5, pit_num=5, seed=None, 
+    def __init__(self, size=(5, 5), orb_num=5, pit_num=5, player_num=1, seed=None, 
                 pygame_mode=True, pygame_with_help=True, show_partial_obs=True):
         assert len(size) == 2
         self.size = size
 
-        assert size[0]*size[1] > (orb_num+pit_num)
+        assert size[0]*size[1] > (orb_num+pit_num+player_num)
         self.orb_num = orb_num
         self.pit_num = pit_num
+        self.player_num = player_num
 
         self.seed = seed
         self._pygame_mode = pygame_mode
         self._pygame_with_help = pygame_with_help
         self._show_partial_obs = show_partial_obs
 
+        self.player_turn = 0 # 0, ..., self.player_num-1
         self.epsilon = 1e-5
         self.frame_time = 1 / 60
-
-        self.memories = [Memory(self)]
 
     def _check_events(self):
         action = None
@@ -85,7 +85,7 @@ class PitsAndOrbs:
 
     def _display_objects(self):
         if self._show_partial_obs:
-            board = self.memories[0].get()
+            board = self.memory.get()
         else:
             board = self.board_state
 
@@ -127,13 +127,13 @@ class PitsAndOrbs:
             self.border_margin, self.border_margin)
         )
 
-        if self.player_has_orb:
+        if self.players_have_orb[self.player_turn]:
             self._draw_orb(i, j, half_size=True)
 
         return rect
 
     def _draw_player_direction(self, i, j):
-        match self.player_direction:
+        match self.player_directions[self.player_turn]:
             case 0:
                 points = [
                 (j*self.multiplier+self.border_width+self.multiplier/4, i*self.multiplier+self.border_width+self.multiplier/4),
@@ -282,27 +282,28 @@ class PitsAndOrbs:
 
         match action:
             case 0: # turn right
-                reward = self._turn_right(reward)                
+                reward = self._turn_right(reward)
             case 1: # move forward
                 reward = self._move_forward(reward)
             case 2: # pick orb up
                 reward = self._pick_orb_up(reward)
             case 3: # put orb down
                 reward = self._put_orb_down(reward)
-            case _: # not valid action
+            case _: # not-valid action
                 print("Not a valid action!")
                 raise
 
         return reward
 
     def _turn_right(self, reward):
-        self.player_direction = (self.player_direction + 1) % len(PitsAndOrbs.DIRECTIONS)
+        self.player_directions[self.player_turn] = \
+            (self.player_directions[self.player_turn] + 1) % len(PitsAndOrbs.DIRECTIONS)
         # reward -= 0.05
 
         return reward
 
     def _move_forward(self, reward):
-        player_pos_prev = self.get_player_position()
+        player_pos_prev = self.player_poses[self.player_turn]
         player_pos_i, player_pos_j = player_pos_prev
 
         match self.board_state[player_pos_i, player_pos_j]:
@@ -314,10 +315,8 @@ class PitsAndOrbs:
                 self.board_state[player_pos_i, player_pos_j] = 3
             case 7:
                 self.board_state[player_pos_i, player_pos_j] = 6
-            case 9:
-                self.board_state[player_pos_i, player_pos_j] = 8
 
-        match self.player_direction:
+        match self.player_directions[self.player_turn]:
             case 0: # west
                 player_pos_j -= 1
             case 1: # north
@@ -332,6 +331,8 @@ class PitsAndOrbs:
         match self.board_state[player_pos_i, player_pos_j]:
             case 0:
                 self.board_state[player_pos_i, player_pos_j] = 1
+            case 1:
+                pass
             case 2:
                 self.board_state[player_pos_i, player_pos_j] = 4
 
@@ -344,22 +345,23 @@ class PitsAndOrbs:
                 self.board_state[player_pos_i, player_pos_j] = 9
 
         if (player_pos_i, player_pos_j) != player_pos_prev: # player actually moved
-            self.player_movements += 1
+            self.player_poses[self.player_turn] = (player_pos_i, player_pos_j)
+            self.player_movements[self.player_turn] += 1
 
-        # reward -= 0.05
+            # reward -= 0.1
 
         return reward
 
     def _pick_orb_up(self, reward):
-        if self.player_has_orb:
+        if self.players_have_orb[self.player_turn]:
             # reward -= 0.1
 
             return reward
 
-        player_pos_i, player_pos_j = self.get_player_position()
+        player_pos_i, player_pos_j = self.player_poses[self.player_turn]
         if self.board_state[player_pos_i, player_pos_j] == 4:
             self.board_state[player_pos_i, player_pos_j] = 1
-            self.player_has_orb = True
+            self.players_have_orb[self.player_turn] = True
 
             # reward += 0.1
         else:
@@ -369,17 +371,17 @@ class PitsAndOrbs:
         return reward
 
     def _put_orb_down(self, reward):
-        if not self.player_has_orb:
+        if not self.players_have_orb[self.player_turn]:
             # reward -= 0.1
 
             return reward
 
-        player_pos_i, player_pos_j = self.get_player_position()
+        player_pos_i, player_pos_j = self.player_poses[self.player_turn]
 
         match self.board_state[player_pos_i, player_pos_j]:
             case 1:
                 self.board_state[player_pos_i, player_pos_j] = 4
-                self.player_has_orb = False
+                self.players_have_orb[self.player_turn] = False
 
                 # reward -= 0.1
                 pass
@@ -388,7 +390,7 @@ class PitsAndOrbs:
                 pass
             case 5:
                 self.board_state[player_pos_i, player_pos_j] = 7
-                self.player_has_orb = False
+                self.players_have_orb[self.player_turn] = False
 
                 self._move_orbs_randomly()
 
@@ -450,6 +452,40 @@ class PitsAndOrbs:
                 self.board_state[orb_pos_i, orb_pos_j] = 7
             case 6:
                 self.board_state[orb_pos] = prev_cell
+
+    def _calc_dist_nearest_pit(self, player_pos, use_mem=False):
+        if use_mem:
+            board = self.memory.board
+        else:
+            board = self.board_state
+
+        dists = [float("inf")]
+        for cell_type in (3, 5):
+            pit_pos_Is, pit_pos_Js = np.where(board == cell_type)
+            if len(pit_pos_Is) < 1:
+                continue
+
+            for pit_pos in zip(pit_pos_Is, pit_pos_Js):
+                dists.append(abs(player_pos[0]-pit_pos[0])+abs(player_pos[1]-pit_pos[1]))
+
+        return min(dists)
+
+    def _calc_dist_nearest_orb(self, player_pos, use_mem=False):
+        if use_mem:
+            board = self.memory.board
+        else:
+            board = self.board_state
+
+        dists = [float("inf")]
+        for cell_type in (2, 4):
+            orb_pos_Is, orb_pos_Js = np.where(board == cell_type)
+            if len(orb_pos_Is) < 1:
+                continue
+
+            for orb_pos in zip(orb_pos_Is, orb_pos_Js):
+                dists.append(abs(player_pos[0]-orb_pos[0])+abs(player_pos[1]-orb_pos[1]))
+
+        return min(dists)
 
     def play1(self, show_obs_or_state=0, show_help=True, 
                 clear=True): # input=4 quits the game
@@ -519,6 +555,9 @@ class PitsAndOrbs:
 
         obs = self.get_partial_obs_with_mem(info)
 
+        #change players' turn
+        self.player_turn = (self.player_turn + 1) % self.player_num
+
         return obs, reward, done, info
 
     def reset_game(self, seed=None):
@@ -559,20 +598,18 @@ class PitsAndOrbs:
 
         np.random.seed(seed)
 
-        self.printed_game_is_finished = False
-
         self.board_state = np.zeros(self.size, dtype=np.uint8)
         indices = list(range(self.board_state.size))
 
-        random_cells = np.random.choice(indices, size=self.pit_num+self.orb_num+1, replace=False)
+        random_cells = np.random.choice(indices, size=self.pit_num+self.orb_num+self.player_num, replace=False)
         pit_indices = random_cells[: self.pit_num]
         orb_indices = random_cells[self.pit_num: self.pit_num+self.orb_num]
-        player_index = random_cells[-1]
+        players_indices = random_cells[-self.player_num:]
 
         self.board_state = self.board_state.flatten()
 
-        # put the player randomly in the board
-        self.board_state[player_index] = 1
+        # put the player(s) randomly in the board
+        self.board_state[players_indices] = 1
 
         # create random pits and orbs in the board
         self.board_state[orb_indices] = 2
@@ -580,9 +617,16 @@ class PitsAndOrbs:
         
         self.board_state = self.board_state.reshape(self.size)
 
-        self.player_direction = np.random.randint(len(PitsAndOrbs.DIRECTIONS))
-        self.player_has_orb = False
-        self.player_movements = 0
+        # initiating multiple players
+        self.player_poses = [(player_index // self.size[1], player_index % self.size[1]) \
+                            for player_index in players_indices]
+        self.player_directions = [np.random.randint(len(PitsAndOrbs.DIRECTIONS)) \
+                            for _ in range(self.player_num)]
+        self.players_have_orb = [False for _ in range(self.player_num)]
+        self.player_movements = [0 for _ in range(self.player_num)]
+        self.memory = Memory(self)
+
+        self.printed_game_is_finished = False
 
         info = self.get_info()
         obs = self.get_partial_obs_with_mem(info)
@@ -594,27 +638,25 @@ class PitsAndOrbs:
 
     def get_neighbors(self):
         padded_board_state = np.zeros((self.size[0]+2, self.size[1]+2), dtype=np.uint8)
-        padded_board_state[0, :] = len(PitsAndOrbs.CELLS) - 1
-        padded_board_state[-1, :] = len(PitsAndOrbs.CELLS) - 1
-        padded_board_state[:, 0] = len(PitsAndOrbs.CELLS) - 1
-        padded_board_state[:, -1] = len(PitsAndOrbs.CELLS) - 1
+        padded_board_state[0, :] = len(PitsAndOrbs.CELLS)
+        padded_board_state[-1, :] = len(PitsAndOrbs.CELLS)
+        padded_board_state[:, 0] = len(PitsAndOrbs.CELLS)
+        padded_board_state[:, -1] = len(PitsAndOrbs.CELLS)
         padded_board_state[1:-1, 1:-1] = self.board_state
 
-        player_pos_i, player_pos_j = self.get_player_position()
+        player_pos_i, player_pos_j = self.player_poses[self.player_turn]
         player_pos_i += 1
         player_pos_j += 1
-        obs = padded_board_state[player_pos_i-1:player_pos_i+2, player_pos_j-1:player_pos_j+2]
+        obs = padded_board_state[player_pos_i-1: player_pos_i+2, player_pos_j-1: player_pos_j+2]
 
         return obs
 
     def get_partial_obs_with_mem(self, info):
-        player_index = 0
-        player_pos = info["player position"]
-
+        player_pos = info[f"player{self.player_turn} position"]
         neighbors = self.get_neighbors()
 
-        self.memories[player_index].update(neighbors, player_pos)
-        partial_obs_with_mem = self.memories[player_index].get()
+        self.memory.update(neighbors, player_pos)
+        partial_obs_with_mem = self.memory.get()
 
         return partial_obs_with_mem
 
@@ -634,20 +676,12 @@ class PitsAndOrbs:
 
     def get_info(self):
         return {
-            "player position": self.get_player_position(),
-            "player direction": PitsAndOrbs.DIRECTIONS[self.player_direction], 
-            "player has orb": self.player_has_orb,
-            "player movements#": self.player_movements,
-            }
+            f"player{i} position": self.player_poses[i] for i in range(self.player_num)} | {
+            f"player{i} direction": PitsAndOrbs.DIRECTIONS[self.player_directions[i]] for i in range(self.player_num)} | {
+            f"player{i} has orb": self.players_have_orb[i] for i in range(self.player_num)} | {
+            f"player{i} movements#": self.player_movements[i] for i in range(self.player_num)
+        }
   
-    def get_player_position(self):
-        for player_cell in (1, 4, 5, 7): # all possible values for player being in a cell
-            i, j = np.where(self.board_state==player_cell)
-            if i.shape != (0,) and j.shape != (0,):
-                break
-
-        return i[0], j[0]
-
     def clear_screen(self):
         os.system("cls" if os.name=="nt" else "clear")
 

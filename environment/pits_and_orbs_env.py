@@ -29,10 +29,11 @@ class PitsAndOrbsEnv(gym.Env):
 
         self.game = PitsAndOrbs(pygame_mode=pygame_mode, **kwargs)
 
+        player_num = self.game.player_num
         self.observation_space = gym.spaces.Dict({
-            "board": gym.spaces.Box(low=0, high=len(self.game.CELLS)-1, shape=self.game.size, dtype=np.uint8),
-            "player_direction": gym.spaces.Discrete(4),
-            "player_has_orb": gym.spaces.Discrete(2),
+            "board": gym.spaces.Box(low=0, high=len(self.game.CELLS)-1, shape=self.game.size, dtype=np.uint8)} | {
+            f"player{i}_direction": gym.spaces.Discrete(4) for i in range(player_num)} | {
+            f"player{i}_has_orb": gym.spaces.Discrete(2) for i in range(player_num)
         })
         self.action_space = gym.spaces.Discrete(len(self.game.ACTIONS))
 
@@ -42,7 +43,9 @@ class PitsAndOrbsEnv(gym.Env):
         return self._get_obs(obs)
 
     def step(self, action):
-        if self.game.player_movements < self.max_movements:
+        player_turn = self.game.player_turn
+
+        if self.game.player_movements[player_turn] < self.max_movements:
             obs, reward, done, info = self.game.step(action)
             observation = self._get_obs(obs)
 
@@ -74,10 +77,12 @@ class PitsAndOrbsEnv(gym.Env):
         self.game.close_game()
 
     def _get_obs(self, obs):
+        player_num = self.game.player_num
+
         return OrderedDict([
             ("board", obs),
-            ("player_direction", self.game.player_direction),
-            ("player_has_orb", int(self.game.player_has_orb)),
+            *((f"player{i}_direction", self.game.player_directions[i]) for i in range(player_num)),
+            *((f"player{i}_has_orb", int(self.game.players_have_orb[i])) for i in range(player_num)),
         ])
 
     def _get_info(self):
@@ -86,6 +91,9 @@ class PitsAndOrbsEnv(gym.Env):
 
 if __name__ == "__main__":
     env = PitsAndOrbsEnv()
+    print(env.observation_space.sample())
+    print()
+
     obs = env.reset()
     print(obs)
     print()
