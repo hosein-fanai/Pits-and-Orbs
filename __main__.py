@@ -23,7 +23,7 @@ if run_flag:
     model_path = args.mpath
     gif_path = args.gpath
 
-    env = make_env(render_mode="human")
+    env = make_env(render_mode="human") # TODO: get arguments from ./configs/run.yaml
     agent = Agent(env, model_path)
 
     print()
@@ -40,7 +40,7 @@ if run_flag:
         print()
         print("Skipped creating .gif file since no path was provided to save it.")
 elif train_flag:
-    with open("./agent/config.yaml") as stream:
+    with open("./configs/train.yaml") as stream:
         configs = yaml.safe_load(stream)
 
         print("* Initializing constants of the project according to ./agent/config.yaml")
