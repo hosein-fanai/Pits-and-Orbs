@@ -71,14 +71,15 @@ python3 -m pip install stable-baselines3==1.8.0 tensorboard
 ```
 
 ## CLI Usage
-The CLI is used for running a certain RL model on the environment and saving the PyGame rendered frames to a .gif file.
+The CLI is used for running or training RL models on the environment. Be aware that ```-r``` or ```--run``` means to run the model on the environment according to the ./configs/run.yaml, and save the frames in a .gif file. And, ```-t``` or ```--train``` means to train a new model according to the ./configs/train.yaml settings.
 
 ```bash
-python3 . "path to the model" "path to save the gif file"
+python3 . [-r or -t] --mpath="path to the model"  --gpath="path to save the gif file"
 ```
-For headless servers use this CLI (make sure you have installed xfvb thoroughly):
+
+For headless servers write this before the CLI above in the same line (make sure you have installed xfvb thoroughly):
 ```bash
-xvfb-run -s "-screen 0 1400x900x24" python3 . "path to the model" "path to save the gif file"
+xvfb-run -s "-screen 0 1400x900x24"
 ```
 For more information use CLI's help command:
 ```bash
