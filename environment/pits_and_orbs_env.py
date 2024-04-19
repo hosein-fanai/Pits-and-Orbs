@@ -49,7 +49,7 @@ class PitsAndOrbsEnv(gym.Env):
             obs, reward, done, info = self.game.step(action)
             observation = self._get_obs(obs)
 
-            if self.game.player_movements == self.max_movements - 1:
+            if self.game.player_movements[player_turn] == self.max_movements - 1:
                 done = True # truncated
 
             return observation, reward, done, info
