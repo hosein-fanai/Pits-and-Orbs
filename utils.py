@@ -8,6 +8,7 @@ from environment.pits_and_orbs_env import PitsAndOrbsEnv
 
 from wrappers.onehot_observation import OnehotObservation
 from wrappers.normalize_observation import NormalizeObservation
+from wrappers.concat_observation import ConcatObservation
 
 
 def run_agent(env, agent, max_steps=1000, fps=None, 
@@ -68,8 +69,9 @@ def create_gif(frames, file_path):
 def make_env(render_mode="rgb_array", max_movements=30, size=(5, 5), 
             orb_num=5, pit_num=5, seed=None, onehot_obs=True, 
             norm_obs=False, num_stack=None):
-    env = PitsAndOrbsEnv(render_mode=render_mode, pygame_with_help=False, max_movements=max_movements, 
-                        size=size, orb_num=orb_num, pit_num=pit_num, seed=seed)
+    env = PitsAndOrbsEnv(render_mode=render_mode, pygame_with_help=False, 
+                        max_movements=max_movements, size=size, orb_num=orb_num, 
+                        pit_num=pit_num, seed=seed)
 
     if onehot_obs and not norm_obs:
         env = OnehotObservation(env)
@@ -77,7 +79,17 @@ def make_env(render_mode="rgb_array", max_movements=30, size=(5, 5),
     if norm_obs and not onehot_obs:
         env = NormalizeObservation(env)
 
+    env = ConcatObservation(env)
+
     if num_stack:
         env = wrappers.FrameStack(env, num_stack=num_stack)
 
     return env
+
+
+if __name__ == "__main__":
+    env = make_env()
+
+    obs = env.reset()
+    print(obs)
+    print(obs.shape)
