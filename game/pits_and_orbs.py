@@ -34,7 +34,7 @@ class PitsAndOrbs:
         self._pygame_with_help = pygame_with_help
         self._show_partial_obs = show_partial_obs
 
-        self.player_turn = 0 # 0, ..., self.player_num-1
+        self.player_turn = 0 # (0, ..., self.player_num-1)
         self.epsilon = 1e-5
         self.frame_time = 1 / 60
 
@@ -89,36 +89,43 @@ class PitsAndOrbs:
         else:
             board = self.board_state
 
+        for player_index, (player_pos_i, player_pos_j) in enumerate(self.player_poses):
+            self._draw_player(player_pos_i, player_pos_j, player_index)
+
         for i in range(self.size[0]):
             for j in range(self.size[1]):
                 cell_type = board[i, j]
                 if cell_type == 0:
                     continue
                 elif cell_type == 1:
-                    self._draw_player(i, j)
-                    self._draw_player_direction(i, j)
+                    # self._draw_player(player_pos_i, player_pos_j)
+                    # self._draw_player_direction(player_pos_i, player_pos_j)
+                    pass
                 elif cell_type == 2:
                     self._draw_orb(i, j)
                 elif cell_type == 3:
                     self._draw_pit(i, j)
                 elif cell_type == 4:
-                    self._draw_player(i, j)
+                    # self._draw_player(i, j)
                     self._draw_orb(i,j)
-                    self._draw_player_direction(i, j)
+                    # self._draw_player_direction(i, j)
                 elif cell_type == 5:
-                    self._draw_player(i, j)
+                    # self._draw_player(i, j)
                     self._draw_pit(i,j)
-                    self._draw_player_direction(i, j)
+                    # self._draw_player_direction(i, j)
                 elif cell_type == 6:
                     self._draw_pit(i, j)
                     self._draw_orb(i, j, half_size=True, center=True)
                 elif cell_type == 7:
-                    self._draw_player(i, j)
+                    # self._draw_player(i, j)
                     self._draw_pit(i, j)
                     self._draw_orb(i, j, half_size=True, center=True)
-                    self._draw_player_direction(i, j)
+                    # self._draw_player_direction(i, j)
 
-    def _draw_player(self, i, j):
+        for player_index, (player_pos_i, player_pos_j) in enumerate(self.player_poses):
+            self._draw_player_direction(player_pos_i, player_pos_j, player_index)
+
+    def _draw_player(self, i, j, player_index, is_help=False):
         rect = pygame.draw.rect(
             self.screen, 
             (0, 0, 255), 
@@ -127,13 +134,13 @@ class PitsAndOrbs:
             self.border_margin, self.border_margin)
         )
 
-        if self.players_have_orb[self.player_turn]:
+        if self.players_have_orb[player_index] and not is_help:
             self._draw_orb(i, j, half_size=True)
 
         return rect
 
-    def _draw_player_direction(self, i, j):
-        match self.player_directions[self.player_turn]:
+    def _draw_player_direction(self, i, j, player_index):
+        match self.player_directions[player_index]:
             case 0:
                 points = [
                 (j*self.multiplier+self.border_width+self.multiplier/4, i*self.multiplier+self.border_width+self.multiplier/4),
@@ -218,10 +225,15 @@ class PitsAndOrbs:
                             width=self.border_width)
 
     def _draw_info_and_help(self):
-        player_movement_txt = self.font.render(f"Player Movements: #{self.player_movements}", True, (0, 0, 0), (200, 200, 200))
-        player_movement_rect = player_movement_txt.get_rect()
-        player_movement_rect.topleft = (0, self.size[0]*self.multiplier+self.border_width+10)
-        self.screen.blit(player_movement_txt, player_movement_rect)
+        for i in range(self.player_num):
+            player_turn_text = ""
+            if self.player_turn == i:
+                player_turn_text = "    has to play now!"
+
+            player_movement_txt = self.smaller_font.render(f"Player{i} Movements: #{self.player_movements[i]}"+player_turn_text, True, (0, 0, 0), (200, 200, 200))
+            player_movement_rect = player_movement_txt.get_rect()
+            player_movement_rect.topleft = (0, self.size[0]*self.multiplier+self.border_width+10+30*i)
+            self.screen.blit(player_movement_txt, player_movement_rect)
 
         help_txt = self.smaller_font.render(
             f"{'    |    '.join([str(i)+' ==> '+action.split('.')[-1].upper() for i, action in enumerate(PitsAndOrbs.ACTIONS)])}", 
@@ -239,22 +251,22 @@ class PitsAndOrbs:
             if i == 0:
                 continue
             elif i == 1:
-                obj_rect = self._draw_player(self.size[0]+1, 0)
+                obj_rect = self._draw_player(self.size[0]+1, 0, 0, is_help=True)
             elif i == 2:
                 obj_rect = self._draw_orb(self.size[0]+1, 1)
             elif i == 3:
                 obj_rect = self._draw_pit(self.size[0]+1, 2)
             elif i == 4:
-                obj_rect = self._draw_player(self.size[0]+1, 3)
+                obj_rect = self._draw_player(self.size[0]+1, 3, 0, is_help=True)
                 self._draw_orb(self.size[0]+1, 3)
             elif i == 5:
-                obj_rect = self._draw_player(self.size[0]+1, 4)
+                obj_rect = self._draw_player(self.size[0]+1, 4, 0, is_help=True)
                 self._draw_pit(self.size[0]+1, 4)
             elif i == 6:
                 obj_rect = self._draw_pit(self.size[0]+2, 0)
                 self._draw_orb(self.size[0]+2, 0, half_size=True, center=True)
             elif i == 7:
-                obj_rect = self._draw_player(self.size[0]+2, 1)
+                obj_rect = self._draw_player(self.size[0]+2, 1, 0, is_help=True)
                 self._draw_pit(self.size[0]+2, 1)
                 self._draw_orb(self.size[0]+2, 1, half_size=True, center=True)
 
@@ -453,13 +465,13 @@ class PitsAndOrbs:
             case 6:
                 self.board_state[orb_pos] = prev_cell
 
-    def _calc_dist_nearest_pit(self, player_pos, use_mem=False):
+    def _calc_dist_pits(self, player_pos, use_mem=False):
         if use_mem:
             board = self.memory.board
         else:
             board = self.board_state
 
-        dists = [float("inf")]
+        dists = []
         for cell_type in (3, 5):
             pit_pos_Is, pit_pos_Js = np.where(board == cell_type)
             if len(pit_pos_Is) < 1:
@@ -468,9 +480,9 @@ class PitsAndOrbs:
             for pit_pos in zip(pit_pos_Is, pit_pos_Js):
                 dists.append(abs(player_pos[0]-pit_pos[0])+abs(player_pos[1]-pit_pos[1]))
 
-        return min(dists)
+        return dists
 
-    def _calc_dist_nearest_orb(self, player_pos, use_mem=False):
+    def _calc_dist_orbs(self, player_pos, use_mem=False):
         if use_mem:
             board = self.memory.board
         else:
@@ -485,7 +497,7 @@ class PitsAndOrbs:
             for orb_pos in zip(orb_pos_Is, orb_pos_Js):
                 dists.append(abs(player_pos[0]-orb_pos[0])+abs(player_pos[1]-orb_pos[1]))
 
-        return min(dists)
+        return dists
 
     def play1(self, show_obs_or_state=0, show_help=True, 
                 clear=True): # input=4 quits the game
