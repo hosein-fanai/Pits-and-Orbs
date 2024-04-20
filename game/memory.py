@@ -16,6 +16,6 @@ class Memory:
                             player_pos_j-1: player_pos_j+2] = neighbors
 
     def get(self):
-        board_withoud_bounds = self.board[1: -1, 1: -1]
+        board_withoud_bounds = self.board[1: -1, 1: -1].copy()
 
         return board_withoud_bounds

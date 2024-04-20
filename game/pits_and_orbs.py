@@ -22,7 +22,7 @@ class PitsAndOrbs:
     FPS = 60
 
     def __init__(self, size=(5, 5), orb_num=5, pit_num=5, player_num=1, seed=None, 
-                pygame_mode=True, pygame_with_help=True, show_partial_obs=True):
+                pygame_mode=True, pygame_with_help=True, return_partial_obs=True):
         assert len(size) == 2
         self.size = size
 
@@ -34,7 +34,7 @@ class PitsAndOrbs:
         self.seed = seed
         self._pygame_mode = pygame_mode
         self._pygame_with_help = pygame_with_help
-        self._show_partial_obs = show_partial_obs
+        self._return_partial_obs = return_partial_obs
 
     def _check_events(self):
         action = None
@@ -82,7 +82,7 @@ class PitsAndOrbs:
         pygame.display.flip()
 
     def _display_objects(self):
-        if self._show_partial_obs:
+        if self._return_partial_obs:
             board = self.memory.get()
         else:
             board = self.board_state
@@ -373,7 +373,7 @@ class PitsAndOrbs:
             self.player_poses[self.player_turn] = (player_pos_i, player_pos_j)
             self.player_movements[self.player_turn] += 1
 
-            reward -= 0.1
+            # reward -= 0.1
             # if self.players_have_orb[self.player_turn]: 
             #     dist_player_to_pits = self._calc_dist_pits((player_pos_i, player_pos_j), True)
             #     dist_prev_player_to_pits = self._calc_dist_pits(player_pos_prev, True)
@@ -588,7 +588,7 @@ class PitsAndOrbs:
     def step(self, action):
         reward = self._do_action(action)
 
-        obs = self.get_partial_obs_with_mem()
+        obs = self.get_obs()
         done = self.is_done()
         info = self.get_info()        
 
@@ -666,12 +666,12 @@ class PitsAndOrbs:
 
         self.printed_game_is_finished = False
 
-        obs = self.get_partial_obs_with_mem()
+        obs = self.get_obs()
         info = self.get_info()
 
         for i in range(1, self.player_num): # updating memories according to other players
             self.player_turn = i
-            self.get_partial_obs_with_mem()
+            self.get_obs()
         self.player_turn = 0
 
         if self._pygame_mode:
@@ -694,14 +694,17 @@ class PitsAndOrbs:
 
         return obs
 
-    def get_partial_obs_with_mem(self):
-        player_pos = self.player_poses[self.player_turn]
-        neighbors = self.get_neighbors()
+    def get_obs(self):
+        if self._return_partial_obs:
+            player_pos = self.player_poses[self.player_turn]
+            neighbors = self.get_neighbors()
 
-        self.memory.update(neighbors, player_pos)
-        partial_obs_with_mem = self.memory.get()
+            self.memory.update(neighbors, player_pos)
+            partial_obs_with_mem = self.memory.get()
 
-        return partial_obs_with_mem
+            return partial_obs_with_mem
+        else:
+            return self.board_state.copy()
 
     def get_frame(self):
         assert self._pygame_mode
@@ -736,7 +739,7 @@ class PitsAndOrbs:
 
     def show_board(self, obs=None, info=None, show_obs_or_state=0, 
                     show_help=True, clear=True): # show_obs_or_state=0 prints observation and show_obs_or_state=1 prints state
-        obs = obs if obs is not None else self.get_partial_obs_with_mem()
+        obs = obs if obs is not None else self.get_obs()
         info = info if info is not None else self.get_info()
 
         if clear:

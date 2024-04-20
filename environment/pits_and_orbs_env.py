@@ -71,7 +71,7 @@ class PitsAndOrbsEnv(gym.Env):
                 self.game._update_screen()
                 return self.game.get_frame()
             else:
-                return self.game.get_partial_obs_with_mem(self._get_info())
+                return self.game.get_obs()
 
     def close(self):
         self.game.close_game()
