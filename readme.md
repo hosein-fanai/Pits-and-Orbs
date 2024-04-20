@@ -75,8 +75,9 @@ python3 -m pip install stable-baselines3==1.8.0 tensorboard
 There two options to make an instance of gym-environemnt of the game. First, as mentioned above, you can use ```utils.make_env``` to create a new instance of the enironment. This option gives you access to changing various game class arguments, plus a couple of observation wrappers to appease environment usages for RL algorithms. Secondly, just use ```gym.make``` api as below considering that kwargs give you access to game class arguments:
 
 ```python
-import environment
 import gym
+
+import environment
 
 
 env = gym.make("EchineF/PitsAndOrbs-v0", **kwargs)
