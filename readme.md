@@ -70,6 +70,20 @@ And stable-baselines3 requires you to:
 python3 -m pip install stable-baselines3==1.8.0 tensorboard
 ```
 
+## Making the Environment
+
+There two options to make an instance of gym-environemnt of the game. First, as mentioned above, you can use ```utils.make_env``` to create a new instance of the enironment. This option gives you access to changing various game class arguments, plus a couple of observation wrappers to appease environment usages for RL algorithms. Secondly, just use ```gym.make``` api as below considering that kwargs give you access to game class arguments:
+
+```python
+import environment
+import gym
+
+
+env = gym.make("EchineF/PitsAndOrbs-v0", **kwargs)
+# or
+env = gym.make("EchineF/PitsAndOrbs-two-players-v0", **kwargs)
+```
+
 ## CLI Usage
 The CLI is used for running or training RL models on the environment. Be aware that ```-r``` or ```--run``` means to run the model on the environment according to the ./configs/run.yaml, and save the frames in a .gif file. And, ```-t``` or ```--train``` means to train a new model according to the ./configs/train.yaml settings.
 
