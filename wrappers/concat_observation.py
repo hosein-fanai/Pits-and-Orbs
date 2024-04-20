@@ -12,7 +12,10 @@ class ConcatObservation(gym.ObservationWrapper):
         for dim in env.observation_space["board"].shape:
             board_size *= dim
 
-        direction_size = env.observation_space["player0_direction"].shape[0]
+        try:
+            direction_size = env.observation_space["player0_direction"].shape[0]
+        except:
+            direction_size = 1
 
         self.observation_space = gym.spaces.Box(
             low=0, high=1,                                 
