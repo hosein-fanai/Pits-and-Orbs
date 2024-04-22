@@ -10,6 +10,7 @@ from agent.agent import Agent
 parser = ArgumentParser(description="A multi-agents-system project (called Pits and Orbs) which is able to be ran via cli.")
 parser.add_argument("--run", "-r", action="store_true", help="The flag to run the agent on the environment (can't be used with train flag on).")
 parser.add_argument("--train", "-t", action="store_true", help="The flag to train the agent with the specified ./agent/config.yaml file (can't be used with run flag on).")
+parser.add_argument("--deterministic", "-d", action="store_true", help="The flag to sample agent's actions deterministicly or not.")
 parser.add_argument("--mpath", help="The file path to an RL model.")
 parser.add_argument("--gpath", help="The save file path for gif file containing an episode's frames.")
 
@@ -22,6 +23,7 @@ assert not(run_flag and train_flag) and (run_flag or train_flag)
 if run_flag:
     model_path = args.mpath
     gif_path = args.gpath
+    deterministic = args.deterministic
 
     env = make_env(render_mode="human") # TODO: get arguments from ./configs/run.yaml
     agent = Agent(env, model_path)
@@ -30,7 +32,8 @@ if run_flag:
     print("Using the agent located at:", model_path)
     print()
 
-    rewards, frames = run_agent(env, agent, return_frames=True)
+    rewards, frames = run_agent(env, agent, return_frames=True, 
+                                deterministic_action_choice=deterministic)
 
     if gif_path is not None:
         create_gif(frames, gif_path)

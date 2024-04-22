@@ -11,7 +11,7 @@ from wrappers.normalize_observation import NormalizeObservation
 from wrappers.concat_observation import ConcatObservation
 
 
-def run_agent(env, agent, max_steps=1000, fps=None, 
+def run_agent(env, agent, max_steps=500, fps=None, 
             deterministic_action_choice=False, 
             print_rewards=True, return_frames=True):
     assert return_frames and env.game._pygame_mode
@@ -64,7 +64,7 @@ def create_gif(frames, file_path):
         file_path, format='GIF',
         append_images=frame_images,
         save_all=True,
-        duration=60,
+        duration=90,
         loop=0
     )
 

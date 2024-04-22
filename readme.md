@@ -1,4 +1,4 @@
-# Pits and Orbs Environment as a Multi-Agents System
+# Pits and Orbs Environment as a Multi-Agent System
 ## Description
 A simple game written from scratch in Python having two modes: Terminal Printing and PyGame Window Rendering. To switch between these modes simply change this argument as follows: ```pygame_mode=True``` to have a nice PyGame enabling you to play the game manually. This argument is available in various files, classes, and functions, such as ```game.pits_and_orbs.PitsAndOrbs```, ```environment.pits_and_orbs_env.PitsAndOrbsEnv``` and ```utils.make_env```. The environment only allows players (or agents) to take 4 types of actions: ```Turn Right - Move Forward - Pick Orb Up - Put Orb Down```. It is obvious that ```Move Forward``` action means that the player moves to the next cell in the direction that it is in without crossing the boundaries. The challenging part of training an agent is that this environment is partially observable which means that the agent only has access to its eight neighbors, but not the whole state board (a 2D array). A memory is implemented to appease this matter. The memory tries to save each new cells that the agent sees after getting partial observation. To build the game simply use the following:
 
@@ -86,10 +86,10 @@ env = gym.make("EchineF/PitsAndOrbs-two-players-v0", **kwargs)
 ```
 
 ## CLI Usage
-The CLI is used for running or training RL models on the environment. Be aware that ```-r``` or ```--run``` means to run the model on the environment according to the ./configs/run.yaml, and save the frames in a .gif file. And, ```-t``` or ```--train``` means to train a new model according to the ./configs/train.yaml settings.
+The CLI is used for running or training RL models on the environment. Be aware that ```-r``` or ```--run``` means to run the model on the environment according to the ./configs/run.yaml, and save the frames in a .gif file, and ```-d``` means to whether sample actions deterministicly from agent or greedily. Also, ```-t``` or ```--train``` means to train a new model according to the ./configs/train.yaml settings.
 
 ```bash
-python3 . [-r or -t] --mpath="path to the model"  --gpath="path to save the gif file"
+python3 . [-r or -t] [-d] --mpath="path to the model"  --gpath="path to save the gif file"
 ```
 
 For headless servers write this before the CLI above in the same line (make sure you have installed xfvb thoroughly):
