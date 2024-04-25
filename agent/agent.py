@@ -243,7 +243,7 @@ class Agent:
 
         env.close()
 
-        if configs.get("gif_file_name", None) is not None:
+        if configs["kwargs"].get("gif_file_name", None) is not None:
             gif_file_path = os.path.join("./gifs", configs["kwargs"]["gif_file_name"])
             Agent.create_gif(frames, gif_file_path)
 
