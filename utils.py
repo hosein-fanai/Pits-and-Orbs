@@ -69,11 +69,13 @@ def create_gif(frames, file_path):
     )
 
 
-def make_env(render_mode="rgb_array", max_movements=30, return_partial_obs=True,
-            size=(5, 5), orb_num=5, pit_num=5, player_num=1, seed=None, 
-            onehot_obs=True, norm_obs=False, num_stack=None):
+def make_env(render_mode="rgb_array", max_movements=30, return_obs_type="partial obs",
+            reward_function_type='0', reward_function=None, size=(5, 5), orb_num=5, 
+            pit_num=5, player_num=1, seed=None, onehot_obs=True, norm_obs=False, 
+            num_stack=None):
     env = PitsAndOrbsEnv(render_mode=render_mode, pygame_with_help=False, 
-                        return_partial_obs=return_partial_obs, max_movements=max_movements, 
+                        max_movements=max_movements, return_obs_type=return_obs_type, 
+                        reward_function_type=reward_function_type, reward_function=reward_function,
                         size=size, orb_num=orb_num, pit_num=pit_num, player_num=player_num, 
                         seed=seed)
 

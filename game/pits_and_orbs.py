@@ -19,10 +19,13 @@ class PitsAndOrbs:
     ACTIONS = ["0.turn right", "1.move forward", "2.pick orb up", 
             "3.put orb down"]
 
+    OBSERVATION_TYPES = ["partial obs", "full state", "neighbors"] 
+
     FPS = 60
 
     def __init__(self, size=(5, 5), orb_num=5, pit_num=5, player_num=1, seed=None, 
-                pygame_mode=True, pygame_with_help=True, return_partial_obs=True):
+                pygame_mode=True, pygame_with_help=True, return_obs_type="partial obs", 
+                reward_function_type='0', reward_function=None):
         assert len(size) == 2
         self.size = size
 
@@ -34,7 +37,17 @@ class PitsAndOrbs:
         self.seed = seed
         self._pygame_mode = pygame_mode
         self._pygame_with_help = pygame_with_help
-        self._return_partial_obs = return_partial_obs
+
+        assert return_obs_type.lower() in PitsAndOrbs.OBSERVATION_TYPES
+        self._return_obs_type = return_obs_type.lower()
+
+        if reward_function is None:
+            if reward_function_type == '0':
+                self._reward_function = PitsAndOrbs._reward_function0
+            elif reward_function_type == '1':
+                self._reward_function = PitsAndOrbs._reward_function1
+        else:
+            self._reward_function = reward_function
 
     def _check_events(self):
         action = None
@@ -82,9 +95,9 @@ class PitsAndOrbs:
         pygame.display.flip()
 
     def _display_objects(self):
-        if self._return_partial_obs:
+        if self._return_obs_type in ("partial obs", "neighbors"):
             board = self.memory.get()
-        else:
+        elif self._return_obs_type == "full state":
             board = self.board_state
 
         for player_index, (player_pos_i, player_pos_j) in enumerate(self.player_poses):
@@ -96,29 +109,21 @@ class PitsAndOrbs:
                 if cell_type == 0:
                     continue
                 elif cell_type == 1:
-                    # self._draw_player(player_pos_i, player_pos_j)
-                    # self._draw_player_direction(player_pos_i, player_pos_j)
                     pass
                 elif cell_type == 2:
                     self._draw_orb(i, j)
                 elif cell_type == 3:
                     self._draw_pit(i, j)
                 elif cell_type == 4:
-                    # self._draw_player(i, j)
                     self._draw_orb(i,j)
-                    # self._draw_player_direction(i, j)
                 elif cell_type == 5:
-                    # self._draw_player(i, j)
                     self._draw_pit(i,j)
-                    # self._draw_player_direction(i, j)
                 elif cell_type == 6:
                     self._draw_pit(i, j)
                     self._draw_orb(i, j, half_size=True, center=True)
                 elif cell_type == 7:
-                    # self._draw_player(i, j)
                     self._draw_pit(i, j)
                     self._draw_orb(i, j, half_size=True, center=True)
-                    # self._draw_player_direction(i, j)
 
         for player_index, (player_pos_i, player_pos_j) in enumerate(self.player_poses):
             self._draw_player_direction(player_pos_i, player_pos_j, player_index)
@@ -293,32 +298,105 @@ class PitsAndOrbs:
         self.finished_text = text
         self.finished_text_rect = text_rect
 
-    def _do_action(self, action):
-        reward = 0
+    def _compute_reward(self, flag):
+        reward = self._reward_function(flag=flag)
+        self._current_reward += reward
 
-        match action:
-            case 0: # turn right
-                reward = self._turn_right(reward)
-            case 1: # move forward
-                reward = self._move_forward(reward)
-            case 2: # pick orb up
-                reward = self._pick_orb_up(reward)
-            case 3: # put orb down
-                reward = self._put_orb_down(reward)
-            case _: # not-valid action
-                print("Not a valid action!")
+    @staticmethod
+    def _reward_function0(flag):
+        match flag:
+            case "turned right":
+                reward = 0.
+            case "tried to move forward and moved forward":
+                reward = 0.
+            case "tried to move forward but stayed":
+                reward = 0.
+            case "tried to move forward":
+                reward = 0.
+            case "tried to move forward to cell type 1":
+                reward = 0.
+            case "tried to move forward to cell type 2":
+                reward = 0.
+            case "tried to pick orb up with already having another orb":
+                reward = 0.
+            case "tried to pick orb up in cell type 4":
+                reward = 0.
+            case "tried to pick orb up in cell types other than 4":
+                reward = 0.
+            case "tried to put orb down without having an orb":
+                reward = 0.
+            case "tried to put orb down on cell type 1":
+                reward = 0.
+            case "tried to put orb down on cell type 4":
+                reward = 0.
+            case "tried to put orb down on cell type 5":
+                reward = 1.
+            case "tried to put orb down on cell type 7":
+                reward = 0.
+            case _:
+                print("Wrong flag for computing reward.")
+                raise
+        
+        return reward
+
+    @staticmethod
+    def _reward_function1(flag):
+        match flag:
+            case "turned right":
+                reward = -0.1
+            case "tried to move forward and moved forward":
+                reward = 0.
+            case "tried to move forward but stayed":
+                reward = 0.
+            case "tried to move forward":
+                reward = -0.1
+            case "tried to move forward to cell type 1":
+                reward = 0 # -0.1
+            case "tried to move forward to cell type 2":
+                reward = 0 # 0.1
+            case "tried to pick orb up with already having another orb":
+                reward = -0.1
+            case "tried to pick orb up in cell type 4":
+                reward = 0. # 0.1
+            case "tried to pick orb up in cell types other than 4":
+                reward = -0.1
+            case "tried to put orb down without having an orb":
+                reward = -0.1
+            case "tried to put orb down on cell type 1":
+                reward = -0.1
+            case "tried to put orb down on cell type 4":
+                reward = -0.1
+            case "tried to put orb down on cell type 5":
+                reward = 1.
+            case "tried to put orb down on cell type 7":
+                reward = -0.1
+            case _:
+                print("Wrong flag for computing reward.")
                 raise
 
         return reward
 
-    def _turn_right(self, reward):
+    def _do_action(self, action):
+        match action:
+            case 0:
+                self._turn_right()
+            case 1:
+                self._move_forward()
+            case 2:
+                self._pick_orb_up()
+            case 3:
+                self._put_orb_down()
+            case _: # not-valid action
+                print("Not a valid action!")
+                raise
+
+    def _turn_right(self):
         self.player_directions[self.player_turn] = \
             (self.player_directions[self.player_turn] + 1) % len(PitsAndOrbs.DIRECTIONS)
-        # reward -= 0.05
+        
+        self._compute_reward(flag="turned right")
 
-        return reward
-
-    def _move_forward(self, reward):
+    def _move_forward(self):
         player_pos_prev = self.player_poses[self.player_turn]
         player_pos_i, player_pos_j = player_pos_prev
 
@@ -351,10 +429,12 @@ class PitsAndOrbs:
             case 1: # two players cannot be in the same cell
                 self.board_state[player_pos_prev] = player_cell_type_prev
                 player_pos_i, player_pos_j = player_pos_prev
+
+                self._compute_reward(flag="tried to move forward to cell type 1")
             case 2:
                 self.board_state[player_pos_i, player_pos_j] = 4
 
-                # reward += 0.1
+                self._compute_reward(flag="tried to move forward to cell type 2")
             case 3:
                 self.board_state[player_pos_i, player_pos_j] = 5
             case 4:
@@ -373,46 +453,32 @@ class PitsAndOrbs:
             self.player_poses[self.player_turn] = (player_pos_i, player_pos_j)
             self.player_movements[self.player_turn] += 1
 
-            # reward -= 0.1
-            # if self.players_have_orb[self.player_turn]: 
-            #     dist_player_to_pits = self._calc_dist_pits((player_pos_i, player_pos_j), True)
-            #     dist_prev_player_to_pits = self._calc_dist_pits(player_pos_prev, True)
-            #     diff = min([a-b for a, b in zip(dist_player_to_pits, dist_prev_player_to_pits)])
-            #     print([a-b for a, b in zip(dist_player_to_pits, dist_prev_player_to_pits)])
-            #     if diff <= 0: # player having an orb moved closer to pits
-            #         reward += 0.2
-            # else:
-            #     dist_player_to_orbs = self._calc_dist_orbs((player_pos_i, player_pos_j), True)
-            #     dist_prev_player_to_orbs = self._calc_dist_orbs(player_pos_prev, True)
-            #     diff = min([a-b for a, b in zip(dist_player_to_orbs, dist_prev_player_to_orbs)])
-            #     if diff <= 0: # player not having an orb moved closer to orbs
-            #         reward += 0.2
+            self._compute_reward(flag="tried to move forward and moved forward")
+        else: # player couldn't move
+            self._compute_reward(flag="tried to move forward but stayed")
 
-        return reward
+        self._compute_reward(flag="tried to move forward")
 
-    def _pick_orb_up(self, reward):
+    def _pick_orb_up(self):
         if self.players_have_orb[self.player_turn]:
-            # reward -= 0.1
+            self._compute_reward(flag="tried to pick orb up with already having another orb")
 
-            return reward
+            return
 
         player_pos_i, player_pos_j = self.player_poses[self.player_turn]
         if self.board_state[player_pos_i, player_pos_j] == 4:
             self.board_state[player_pos_i, player_pos_j] = 1
             self.players_have_orb[self.player_turn] = True
 
-            # reward += 0.1
+            self._compute_reward(flag="tried to pick orb up in cell type 4")
         else:
-            # reward -= 0.1
-            pass
+            self._compute_reward(flag="tried to pick orb up in cell types other than 4")
 
-        return reward
-
-    def _put_orb_down(self, reward):
+    def _put_orb_down(self):
         if not self.players_have_orb[self.player_turn]:
-            # reward -= 0.1
+            self._compute_reward(flag="tried to put orb down without having an orb")
 
-            return reward
+            return
 
         player_pos_i, player_pos_j = self.player_poses[self.player_turn]
 
@@ -421,23 +487,18 @@ class PitsAndOrbs:
                 self.board_state[player_pos_i, player_pos_j] = 4
                 self.players_have_orb[self.player_turn] = False
 
-                # reward -= 0.1
-                pass
+                self._compute_reward(flag="tried to put orb down on cell type 1")
             case 4:
-                # reward -= 0.05
-                pass
+                self._compute_reward(flag="tried to put orb down on cell type 4")
             case 5:
                 self.board_state[player_pos_i, player_pos_j] = 7
                 self.players_have_orb[self.player_turn] = False
 
                 self._move_orbs_randomly()
 
-                reward += 1.
+                self._compute_reward(flag="tried to put orb down on cell type 5")
             case 7:
-                # reward -= 0.1
-                pass
-
-        return reward
+                self._compute_reward(flag="tried to put orb down on cell type 7")
 
     def _move_orbs_randomly(self):
         for orb_cell in (2, 4):
@@ -491,39 +552,11 @@ class PitsAndOrbs:
             case 6:
                 self.board_state[orb_pos] = prev_cell
 
-    def _calc_dist_pits(self, player_pos, use_mem=False):
-        if use_mem:
-            board = self.memory.board
-        else:
-            board = self.board_state
+    def _calc_filled_pits(self):
+        cell_type6_num = len(np.where(self.board_state==6)[0])
+        cell_type7_num = len(np.where(self.board_state==7)[0])
 
-        dists = []
-        for cell_type in (3, 5):
-            pit_pos_Is, pit_pos_Js = np.where(board == cell_type)
-            if len(pit_pos_Is) < 1:
-                continue
-
-            for pit_pos in zip(pit_pos_Is, pit_pos_Js):
-                dists.append(abs(player_pos[0]-pit_pos[0])+abs(player_pos[1]-pit_pos[1]))
-
-        return dists
-
-    def _calc_dist_orbs(self, player_pos, use_mem=False):
-        if use_mem:
-            board = self.memory.board
-        else:
-            board = self.board_state
-
-        dists = [float("inf")]
-        for cell_type in (2, 4):
-            orb_pos_Is, orb_pos_Js = np.where(board == cell_type)
-            if len(orb_pos_Is) < 1:
-                continue
-
-            for orb_pos in zip(orb_pos_Is, orb_pos_Js):
-                dists.append(abs(player_pos[0]-orb_pos[0])+abs(player_pos[1]-orb_pos[1]))
-
-        return dists
+        return cell_type6_num+cell_type7_num
 
     def play1(self, show_obs_or_state=0, show_help=True, 
                 clear=True): # input=4 quits the game
@@ -586,53 +619,27 @@ class PitsAndOrbs:
             self.clock.tick(PitsAndOrbs.FPS)
 
     def step(self, action):
-        reward = self._do_action(action)
+        self._do_action(action)
 
         obs = self.get_obs()
+        reward = self._current_reward
         done = self.is_done()
         info = self.get_info()        
 
-        #change player turn
+        # change player turn
         self.player_turn = (self.player_turn + 1) % self.player_num
+
+        # reset current step's rewards
+        self._current_reward = 0
 
         return obs, reward, done, info
 
     def reset_game(self, seed=None):
+        # initiating variables
+        self.printed_game_is_finished = False
+        self._current_reward = 0.
+
         seed = self.seed if seed is None else seed
-
-        if self._pygame_mode:
-            pygame.init()
-
-            self.multiplier = 100
-            self.border_color = (255, 120, 0)
-            self.border_width = 3
-            self.border_margin = self.multiplier - (1.5 * self.border_width)
-
-            self.play = self.play2
-
-            try:
-                icon = pygame.image.load("./game/pao.ico")
-            except:
-                icon = pygame.image.load("./pao.ico")
-            pygame.display.set_icon(icon)
-
-            self.screen_size = (
-                self.size[0]*self.multiplier, 
-                (self.size[1]+(3 if self._pygame_with_help else 0))*self.multiplier
-            )
-            self.screen = pygame.display.set_mode(size=self.screen_size, 
-                                                flags=pygame.RESIZABLE)
-            self.screen_rect = self.screen.get_rect()
-            self.screen_dims = self.screen_rect.size
-
-            self.clock = pygame.time.Clock()
-            self.font = pygame.font.SysFont(None, int(0.5*self.multiplier))
-            self.smaller_font = pygame.font.SysFont(None, int(0.15*self.multiplier))
-
-            pygame.display.set_caption("Pits and Orbs")
-        else:
-            self.play = self.play1
-
         np.random.seed(seed)
 
         self.board_state = np.zeros(self.size, dtype=np.uint8)
@@ -664,18 +671,51 @@ class PitsAndOrbs:
         self.player_movements = [0 for _ in range(self.player_num)]
         self.memory = Memory(self)
 
-        self.printed_game_is_finished = False
-
-        obs = self.get_obs()
-        info = self.get_info()
-
-        for i in range(1, self.player_num): # updating memories according to other players
+        # updating shared memory according to every players' neighbors
+        for i in range(1, self.player_num): 
             self.player_turn = i
             self.get_obs()
         self.player_turn = 0
 
+        # initiating game-runner functions
         if self._pygame_mode:
-            self._update_screen()
+            pygame.init()
+
+            self.multiplier = 100
+            self.border_color = (255, 120, 0)
+            self.border_width = 3
+            self.border_margin = self.multiplier - (1.5 * self.border_width)
+
+            self.play = self.play2
+
+            try:
+                icon = pygame.image.load("./game/pao.ico")
+            except:
+                icon = pygame.image.load("./pao.ico")
+            pygame.display.set_icon(icon)
+
+            self.screen_size = (
+                self.size[0]*self.multiplier, 
+                (self.size[1]+(3 if self._pygame_with_help else 0))*self.multiplier
+            )
+            self.screen = pygame.display.set_mode(size=self.screen_size, 
+                                                flags=pygame.RESIZABLE)
+            self.screen_rect = self.screen.get_rect()
+            self.screen_dims = self.screen_rect.size
+
+            self.clock = pygame.time.Clock()
+            self.font = pygame.font.SysFont(None, int(0.5*self.multiplier))
+            self.smaller_font = pygame.font.SysFont(None, int(0.15*self.multiplier))
+
+            pygame.display.set_caption("Pits and Orbs")
+
+            self._update_screen() # render everything on the PyGame window for the first time
+        else:
+            self.play = self.play1           
+
+        # getting the first observation and information
+        obs = self.get_obs()
+        info = self.get_info()
 
         return obs, info
 
@@ -695,7 +735,7 @@ class PitsAndOrbs:
         return obs
 
     def get_obs(self):
-        if self._return_partial_obs:
+        if self._return_obs_type == "partial obs":
             player_pos = self.player_poses[self.player_turn]
             neighbors = self.get_neighbors()
 
@@ -703,8 +743,14 @@ class PitsAndOrbs:
             partial_obs_with_mem = self.memory.get()
 
             return partial_obs_with_mem
-        else:
-            return self.board_state.copy()
+        elif self._return_obs_type == "full state":
+            full_state = self.board_state.copy()
+
+            return full_state
+        elif self._return_obs_type == "neighbors":
+            partial_obs_with_neighbors = self.get_neighbors()
+
+            return partial_obs_with_neighbors
 
     def get_frame(self):
         assert self._pygame_mode
@@ -717,12 +763,6 @@ class PitsAndOrbs:
         done = (self._calc_filled_pits() == self.orb_num)
 
         return done
-
-    def _calc_filled_pits(self):
-        cell_type6_num = len(np.where(self.board_state==6)[0])
-        cell_type7_num = len(np.where(self.board_state==7)[0])
-
-        return cell_type6_num+cell_type7_num
 
     def get_info(self):
         return {

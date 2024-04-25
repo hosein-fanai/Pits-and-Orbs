@@ -1,6 +1,38 @@
 # Pits and Orbs Environment as a Multi-Agent System
 ## Description
-A simple game written from scratch in Python having two modes: Terminal Printing and PyGame Window Rendering. To switch between these modes simply change this argument as follows: ```pygame_mode=True``` to have a nice PyGame enabling you to play the game manually. This argument is available in various files, classes, and functions, such as ```game.pits_and_orbs.PitsAndOrbs```, ```environment.pits_and_orbs_env.PitsAndOrbsEnv``` and ```utils.make_env```. The environment only allows players (or agents) to take 4 types of actions: ```Turn Right - Move Forward - Pick Orb Up - Put Orb Down```. It is obvious that ```Move Forward``` action means that the player moves to the next cell in the direction that it is in without crossing the boundaries. The challenging part of training an agent is that this environment is partially observable which means that the agent only has access to its eight neighbors, but not the whole state board (a 2D array). A memory is implemented to appease this matter. The memory tries to save each new cells that the agent sees after getting partial observation. To build the game simply use the following:
+A simple game written from scratch in Python having two modes: Terminal Printing and PyGame Window Rendering. To switch between these modes simply change this argument as follows: ```pygame_mode=True``` to have a nice PyGame enabling you to play the game manually. This argument is available in various files, classes, and functions, such as ```game.pits_and_orbs.PitsAndOrbs```, ```environment.pits_and_orbs_env.PitsAndOrbsEnv``` and ```utils.make_env```. The environment only allows players (or agents) to take 4 types of actions: ```Turn Right - Move Forward - Pick Orb Up - Put Orb Down```. It is obvious that ```Move Forward``` action means the player moves to the next cell in the direction that it is in without crossing the boundaries. 
+
+The challenging part of training an agent is that this environment is partially observable which means that the agent only has access to its eight neighbors, but not the whole state board (a 2D array). A memory is implemented to appease this matter. The memory tries to save each new cells that the agent sees after getting partial observation. That being said, the argument ```return_obs_type``` (for the game's constructor, environment's constructor, or utils.make_env function) can take three inputs to change the output (the observation) of the ```step``` function: ```"partial obs"```, ```"full state"```, or ```"neighbors"```. The first one returns the memory of the agent(s). The second one returns entire table (array) of the game. The third one returns only the 8 neighbors of the player.
+
+Different values for the actions are:
+| Action | Value |
+| :--- | :---: |
+| Turn Right | 0 |
+| Move Forward | 1 |
+| Pick Orb Up | 2 |
+| Put Orb Down | 3 |
+
+Different values for player direction are:
+| Direction | Value |
+| :--- | :---: |
+| West | 0 |
+| North | 1 |
+| East | 2 |
+| South | 3 |
+
+Finally, different values for cell type are (valid values that are stored in a numpy array of a certain size that indicate existence of different situations in that position):
+| Cell Type | Value |
+| :--- | :---: |
+| Nothing | 0 |
+| Player | 1 |
+| Orb | 2 |
+| Pit | 3 |
+| Player & Orb | 4 |
+| Player & Pit | 5 |
+| Orb & Pit | 6 |
+| Player & Orb & Pit | 7 |
+
+To build the game simply use the following:
 
 ```bash
 python3 game/setup.py build
@@ -11,11 +43,31 @@ or create an installer while building the game:
 python3 game/setup.py bdist_msi
 ```
 
-For illustration purposes, if the ```pygame_with_help``` argument is set to ```True```, the PyGame window will have extra height to show players' movements and a guide to what every possible coloring and shapes mean.
+if the ```pygame_with_help``` argument is set to ```True```, the PyGame window will have extra height to show players' movements and a guide to what every possible coloring and shapes mean. For illustration purposes, ```pygame_with_help=True``` is set and shown below:
 
 ![](https://github.com/hosein-fanai/Pits-and-Orbs/blob/main/materials/screenshot.jpg?raw=true "A sample screenshot of the starting point of the PyGame Window mode with help showed.")
 
 As a reminder, the ```utils.make_env``` function is the best and easiest way to create a gym environment out of this game since it provides decent default parameters to train the environment for an RL algorithm.
+
+## Reward Function
+Two distinct reward functions are implemented, one of which is sparse and the other isn't. By the arguments ```reward_function_type``` and ```reward_function```, the using reward function of the game can be changed. ```reward_function``` can get any function that has an argument of flag switching on all the situations a player can get into. The situations and their values for the two implemented reward functions are as follows:
+
+| Situation Flag | Reward Function Type 0 Values | Reward Function Type 1 Values |
+| :--- | :---: | :---: |
+| turned right | 0. | -0.1 |
+| tried to move forward and moved forward | 0. | 0. |
+| tried to move forward but stayed | 0. | 0. |
+| tried to move forward | 0. | -0.1 |
+| tried to move forward to cell type 1 | 0. | 0. |
+| tried to move forward to cell type 2 | 0. | 0. |
+| tried to pick orb up with already having another orb | 0. | -0.1 |
+| tried to pick orb up in cell type 4 | 0. | 0. |
+| tried to pick orb up in cell types other than 4 | 0. | -0.1 |
+| tried to put orb down without having an orb | 0. | -0.1 |
+| tried to put orb down on cell type 1 | 0. | -0.1 |
+| tried to put orb down on cell type 4 | 0. | -0.1 |
+| tried to put orb down on cell type 5 | 1. | 1. |
+| tried to put orb down on cell type 7 | 0. | -0.1 |
 
 ## Loading the Project
 To load the project use the following logic:
