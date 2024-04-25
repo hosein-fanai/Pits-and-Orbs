@@ -172,7 +172,7 @@ python3 . -h
 ### .gif file example
 If you had installed the project properly, and used the CLI the right way, you should have a similar .gif file as below:
 
-![](https://github.com/hosein-fanai/Pits-and-Orbs/blob/main/gifs/First%20phase%20(single%20agent%20with%2010mil-iters-A2C%20model).gif?raw=true "First phase (single agent with 10mil-iters-A2C model")
+![](https://github.com/hosein-fanai/Pits-and-Orbs/blob/main/gifs/First%20phase%20+%20agent%20has%20a%20memory%20+%20rew%20func%201%20(single%20agent%20with%20470mil-iters-A2C%20model).gif?raw=true "First phase + agent has a memory + rew func 1 (single agent with 470mil-iters-A2C model).gif")
 
 ## Sample Notebook
 There is a sample notebook in the root directory of the repository: ```./notebook.ipynb```. Further use cases are implemented there. You can check it out.
