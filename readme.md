@@ -154,19 +154,20 @@ env = gym.make("EchineF/PitsAndOrbs-two-players-v0", **kwargs)
 In the ```wrappers``` directory, there various useful observation wrappers to make the returned observations more valueable for RL algorithms. You can use them manually or just set the appropriate argument for the ```utils.make_env``` function. For instance, ```wrappers.onehot_observation.OnehotObservation``` onehots each of the arrays in the ordereddict output; this wrapper makes it easier for a neural network to understand observations. 
 
 ## CLI Usage
-The CLI is used for running or training RL models on the environment. Be aware that ```-r``` or ```--run``` means to run the model on the environment according to the ./configs/run.yaml, and save the frames in a .gif file, and ```-d``` means to whether sample actions deterministicly from agent or greedily. Also, ```-t``` or ```--train``` means to train a new model according to the ./configs/train.yaml settings.
+The CLI is used for running or training RL models on the environment. Be aware that ```-r``` or ```--run``` means to run the model on the environment according to the ./configs/#/run.yaml, and save the frames in a .gif file. Also, ```-t``` or ```--train``` means to train a new model according to the ./configs/#/train.yaml settings.
 
 ```bash
 python3 . [--run or --train]="config file path"
 ```
 
-For headless servers write this before the CLI above in the same line (make sure you have installed xfvb thoroughly):
-```bash
-xvfb-run -s "-screen 0 1400x900x24"
-```
 For more information use CLI's help command:
 ```bash
 python3 . -h
+```
+
+For headless servers write this line of command before the CLI above in the same line (make sure you have installed xfvb thoroughly):
+```bash
+xvfb-run -s "-screen 0 1400x900x24"
 ```
 
 ### .gif file example
