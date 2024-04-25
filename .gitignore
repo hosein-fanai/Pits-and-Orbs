@@ -6,3 +6,11 @@ game/build/
 
 logs/A2C/A2C_2/
 logs/A2C/A2C_3/
+logs/test/
+
+configs/test/
+
+models/*/test.zip
+models/*/test.h5
+
+gifs/test.zip
