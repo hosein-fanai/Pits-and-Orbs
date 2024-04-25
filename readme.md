@@ -157,7 +157,7 @@ In the ```wrappers``` directory, there various useful observation wrappers to ma
 The CLI is used for running or training RL models on the environment. Be aware that ```-r``` or ```--run``` means to run the model on the environment according to the ./configs/#/run.yaml, and save the frames in a .gif file. Also, ```-t``` or ```--train``` means to train a new model according to the ./configs/#/train.yaml settings.
 
 ```bash
-python3 . [--run or --train]="config file path"
+python3 . --file="config file path" [--run or --train]
 ```
 
 For more information use CLI's help command:
