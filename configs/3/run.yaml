@@ -1,0 +1,24 @@
+A2C:
+  make_env:
+    render_mode: "human"
+    max_movements: 30
+    return_obs_type: "partial obs"
+    reward_function_type: '1'
+    reward_function: null
+    size: (5, 5)
+    orb_num: 5
+    pit_num: 5
+    player_num: 1
+    seed: null
+    onehot_obs: True
+    norm_obs: False
+    num_stack: null
+
+  model_file_name: "3.PitsAndOrbs A2C (stable-baselines3).zip"
+  gif_file_name: "3.First phase + agent has a memory + rew func 1 (single agent A2C model).gif"
+
+  max_steps: 500
+  fps: null
+  deterministic_action_choice: False
+  print_rewards: True
+  return_frames: True

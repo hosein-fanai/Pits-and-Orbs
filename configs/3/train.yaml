@@ -1,0 +1,24 @@
+A2C:
+  n_envs: 64
+  make_env:
+    render_mode: "rgb_array"
+    max_movements: 30
+    return_obs_type: "partial obs"
+    reward_function_type: '1'
+    reward_function: null
+    size: (5, 5)
+    orb_num: 5
+    pit_num: 5
+    player_num: 1
+    seed: null
+    onehot_obs: True
+    norm_obs: False
+    num_stack: null
+
+  model_file_name: "3.PitsAndOrbs A2C (stable-baselines3).zip"
+
+  iterations: 300_000_000
+  ent_coef: 0.05
+  
+  verbose: 0
+  log_interval: 1_000

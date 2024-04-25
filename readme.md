@@ -157,7 +157,7 @@ In the ```wrappers``` directory, there various useful observation wrappers to ma
 The CLI is used for running or training RL models on the environment. Be aware that ```-r``` or ```--run``` means to run the model on the environment according to the ./configs/run.yaml, and save the frames in a .gif file, and ```-d``` means to whether sample actions deterministicly from agent or greedily. Also, ```-t``` or ```--train``` means to train a new model according to the ./configs/train.yaml settings.
 
 ```bash
-python3 . [-r or -t] [-d] --mpath="path to the model"  --gpath="path to save the gif file"
+python3 . [--run or --train]="config file path"
 ```
 
 For headless servers write this before the CLI above in the same line (make sure you have installed xfvb thoroughly):
@@ -173,6 +173,9 @@ python3 . -h
 If you had installed the project properly, and used the CLI the right way, you should have a similar .gif file as below:
 
 ![](https://github.com/hosein-fanai/Pits-and-Orbs/blob/main/gifs/First%20phase%20+%20agent%20has%20a%20memory%20+%20rew%20func%201%20(single%20agent%20with%20470mil-iters-A2C%20model).gif?raw=true "First phase + agent has a memory + rew func 1 (single agent with 470mil-iters-A2C model).gif")
+
+## Available Deep RL Models
+For the first phase of the project (single agent playing in the 5x5 grid with 30 movement limit and a memory of its past confrontations with its 8 neighbors), there are three different models in ```./models/``` directory and their correspondig config files are in ```./configs/```.
 
 ## Sample Notebook
 There is a sample notebook in the root directory of the repository: ```./notebook.ipynb```. Further use cases are implemented there. You can check it out.
