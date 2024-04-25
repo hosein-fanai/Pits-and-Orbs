@@ -1,9 +1,14 @@
 # Pits and Orbs Environment as a Multi-Agent System
 ## Description
-A simple game written from scratch in Python having two modes: Terminal Printing and PyGame Window Rendering. To switch between these modes simply change this argument as follows: ```pygame_mode=True``` to have a nice PyGame enabling you to play the game manually. This argument is available in various files, classes, and functions, such as ```game.pits_and_orbs.PitsAndOrbs```, ```environment.pits_and_orbs_env.PitsAndOrbsEnv``` and ```utils.make_env```. The environment only allows players (or agents) to take 4 types of actions: ```Turn Right - Move Forward - Pick Orb Up - Put Orb Down```. It is obvious that ```Move Forward``` action means the player moves to the next cell in the direction that it is in without crossing the boundaries. 
+A simple game written from scratch in Python having two modes: Terminal Printing and PyGame Window Rendering. To switch between these modes simply change this argument as follows: ```pygame_mode=True``` to have a nice PyGame window enabling you to play the game manually; this argument can be changed from ```game.pits_and_orbs.PitsAndOrbs``` constructor ```pygame_mode``` argument. Or, ```render_mode="human"``` argument from ```environment.pits_and_orbs_env.PitsAndOrbsEnv``` and ```utils.make_env``` function.
 
-The challenging part of training an agent is that this environment is partially observable which means that the agent only has access to its eight neighbors, but not the whole state board (a 2D array). A memory is implemented to appease this matter. The memory tries to save each new cells that the agent sees after getting partial observation. That being said, the argument ```return_obs_type``` (for the game's constructor, environment's constructor, or utils.make_env function) can take three inputs to change the output (the observation) of the ```step``` function: ```"partial obs"```, ```"full state"```, or ```"neighbors"```. The first one returns the memory of the agent(s). The second one returns entire table (array) of the game. The third one returns only the 8 neighbors of the player.
+The ```game``` directory contains files and codes only for game object and is not suitable for RL projects. On the contrary, ```environment``` directory contains gym environment version of the game which has certain properties to used for Reinforcement Learning algorithms. You can install the game with the installer located in the ```dist``` directory.
 
+The goal of the game is for the player to move the orbs to the pits in order to fill them all; that's just it. The game's properties can be set to values other than their default to have a distinct game. For example, the size of the game (its grid shape), the number of orbs (```orbs_num```), the number of pits (```pits_num```), and, even, the number of players (```player_num```) can be changed by the game's constructors. The ```player_num>1``` means the game will be a multi-agent system that the agents will try to cooperate whit eachother to fill the pits. The only thing that makes the environment a bit hard to solve is the limited number of movements that each player can take; the default value of ```max_movements``` is 30. In this environment movements is counted only through actual position changes for a player, but not the direction changes, picking orb up, or putting orb down since these are called steps in RL.
+
+The challenging part of training an agent is that this environment is partially observable which means that the agent only has access to its eight neighbors, but not the whole state board (a 2D array). A memory is implemented to appease this matter. The memory tries to update each new cells that the agent sees (it sees them because they're its neighbors). That being said, the argument ```return_obs_type``` (for the game's constructor, environment's constructor, or utils.make_env function) can take three inputs to change the output (the observation): ```"partial obs"```, ```"full state"```, or ```"neighbors"```. The first one makes the game or environment return the memory of the agent(s) from ```reset``` or ```step``` functions. The second one makes them to return the entire table (array) of the game. The third one makes them to return only the 8 neighbors of the player.
+
+The environment only allows players (or agents) to take 4 types of actions: ```Turn Right - Move Forward - Pick Orb Up - Put Orb Down```. It is obvious that ```Move Forward``` action means the player moves to the next cell in the direction that it is in without crossing the boundaries. 
 Different values for the actions are:
 | Action | Value |
 | :--- | :---: |
@@ -32,6 +37,18 @@ Finally, different values for cell type are (valid values that are stored in a n
 | Orb & Pit | 6 |
 | Player & Orb & Pit | 7 |
 
+The environment outputs an observation object as an OrderedDict from ```step``` function and ```reset``` function; its structure is as follows:
+
+```python
+{
+    "board": observation, # observation is an np array (depends on the return_obs_type argument)
+    "player0_direction": player_directions[i], # i is the current player's index
+    "player0_has_orb": players_have_orb[i] # i is the current player's index
+}
+```
+
+0 after last two keys mean that those are first player's information, and if there were other player, we would have more keys.
+
 To build the game simply use the following:
 
 ```bash
@@ -43,11 +60,9 @@ or create an installer while building the game:
 python3 game/setup.py bdist_msi
 ```
 
-if the ```pygame_with_help``` argument is set to ```True```, the PyGame window will have extra height to show players' movements and a guide to what every possible coloring and shapes mean. For illustration purposes, ```pygame_with_help=True``` is set and shown below:
+If the ```pygame_with_help``` argument is set to ```True```, the PyGame window will have extra height to show players' movements and a guide to what every possible coloring and shapes mean. For illustration purposes, ```pygame_with_help=True``` is set and shown below:
 
 ![](https://github.com/hosein-fanai/Pits-and-Orbs/blob/main/materials/screenshot.jpg?raw=true "A sample screenshot of the starting point of the PyGame Window mode with help showed.")
-
-As a reminder, the ```utils.make_env``` function is the best and easiest way to create a gym environment out of this game since it provides decent default parameters to train the environment for an RL algorithm.
 
 ## Reward Function
 Two distinct reward functions are implemented, one of which is sparse and the other isn't. By the arguments ```reward_function_type``` and ```reward_function```, the using reward function of the game can be changed. ```reward_function``` can get any function that has an argument of flag switching on all the situations a player can get into. The situations and their values for the two implemented reward functions are as follows:
@@ -136,6 +151,7 @@ env = gym.make("EchineF/PitsAndOrbs-v0", **kwargs)
 # or
 env = gym.make("EchineF/PitsAndOrbs-two-players-v0", **kwargs)
 ```
+In the ```wrappers``` directory, there various useful observation wrappers to make the returned observations more valueable for RL algorithms. You can use them manually or just set the appropriate argument for the ```utils.make_env``` function. For instance, ```wrappers.onehot_observation.OnehotObservation``` onehots each of the arrays in the ordereddict output; this wrapper makes it easier for a neural network to understand observations. 
 
 ## CLI Usage
 The CLI is used for running or training RL models on the environment. Be aware that ```-r``` or ```--run``` means to run the model on the environment according to the ./configs/run.yaml, and save the frames in a .gif file, and ```-d``` means to whether sample actions deterministicly from agent or greedily. Also, ```-t``` or ```--train``` means to train a new model according to the ./configs/train.yaml settings.
