@@ -77,7 +77,7 @@ class Agent:
             file_path, format="GIF",
             append_images=frame_images,
             save_all=True,
-            duration=120,
+            duration=90,
             loop=0
         )
 
@@ -252,4 +252,3 @@ class Agent:
         else:
             print()
             print("Skipped creating .gif file since no path was provided to save it.")
-
