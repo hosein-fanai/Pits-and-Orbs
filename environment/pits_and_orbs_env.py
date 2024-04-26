@@ -1,4 +1,5 @@
 import gym
+from gym import spaces
 
 import numpy as np
 
@@ -29,13 +30,14 @@ class PitsAndOrbsEnv(gym.Env):
 
         self.game = PitsAndOrbs(pygame_mode=pygame_mode, **kwargs)
 
-        player_num = self.game.players_num
-        self.observation_space = gym.spaces.Dict({
-            "board": gym.spaces.Box(low=0, high=len(self.game.CELLS)-1, shape=self.game.size, dtype=np.uint8)} | {
-            f"player{i}_direction": gym.spaces.Discrete(4) for i in range(player_num)} | {
-            f"player{i}_has_orb": gym.spaces.Discrete(2) for i in range(player_num)
+        players_num = self.game.players_num
+        self.observation_space = spaces.Dict({
+            "board": spaces.Box(low=0, high=len(self.game.CELLS)-1, shape=self.game.size, dtype=np.uint8),
+            **{f"player{i}_direction": spaces.Discrete(4) for i in range(players_num)},
+            **{f"player{i}_has_orb": spaces.Discrete(2) for i in range(players_num)} |
+            ({f"player{i}_position": spaces.Box(low=0, high=max(self.game.size), shape=(2,), dtype=np.uint8) for i in range(players_num)} if players_num > 1 else {})
         })
-        self.action_space = gym.spaces.Discrete(len(self.game.ACTIONS))
+        self.action_space = spaces.Discrete(len(self.game.ACTIONS))
 
     def reset(self, seed=None, options=None):
         obs, info = self.game.reset_game(seed=seed)
@@ -77,13 +79,13 @@ class PitsAndOrbsEnv(gym.Env):
         self.game.close_game()
 
     def _get_obs(self, obs):
-        player_num = self.game.players_num
+        players_num = self.game.players_num
 
         return OrderedDict(
             [("board", obs),
-            *((f"player{i}_direction", self.game.players_direction[i]) for i in range(player_num)),
-            *((f"player{i}_has_orb", int(self.game.players_have_orb[i])) for i in range(player_num))] + 
-            ([(f"player{i}_position", self.game.players_pos[i]) for i in range(player_num)] if self.game.players_num > 1 else [])
+            *((f"player{i}_direction", self.game.players_direction[i]) for i in range(players_num)),
+            *((f"player{i}_has_orb", int(self.game.players_have_orb[i])) for i in range(players_num))] + 
+            ([(f"player{i}_position", np.array(self.game.players_pos[i])) for i in range(players_num)] if players_num > 1 else [])
         )
 
     def _get_info(self):
@@ -91,7 +93,7 @@ class PitsAndOrbsEnv(gym.Env):
 
 
 if __name__ == "__main__":
-    env = PitsAndOrbsEnv()
+    env = PitsAndOrbsEnv(players_num=2)
     print(env.observation_space.sample())
     print()
 

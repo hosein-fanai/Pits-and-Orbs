@@ -32,9 +32,18 @@ def make_env(render_mode="rgb_array", max_movements=30, return_obs_type="partial
 
 
 if __name__ == "__main__":
+    print()
+
     env = make_env()
-    print(env.observation_space.shape)
+    print("Sampled obs from gym api:", env.observation_space.sample())
+    print()
 
     obs = env.reset()
-    print(obs)
-    print(obs.shape)
+    print("Generated obs from reset function:", obs)
+    print()
+
+    print("Sampled obs from gym api's shape", env.observation_space.shape)
+    print()
+
+    print("Generated obs from reset function's shape", obs.shape)
+    print()

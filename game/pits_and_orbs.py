@@ -19,7 +19,7 @@ class PitsAndOrbs:
     ACTIONS = ["0.turn right", "1.move forward", "2.pick orb up", 
             "3.put orb down"]
 
-    OBSERVATION_TYPES = ["partial obs", "full state", "neighbors"] 
+    OBSERVATIONS = ["partial obs", "full state", "neighbors"] 
 
     FPS = 60
 
@@ -38,7 +38,7 @@ class PitsAndOrbs:
         self._pygame_mode = pygame_mode
         self._pygame_with_help = pygame_with_help
 
-        assert return_obs_type.lower() in PitsAndOrbs.OBSERVATION_TYPES
+        assert return_obs_type.lower() in PitsAndOrbs.OBSERVATIONS
         self._return_obs_type = return_obs_type.lower()
 
         if reward_function is None:
