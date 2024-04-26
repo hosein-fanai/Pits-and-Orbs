@@ -33,9 +33,11 @@ class PitsAndOrbsEnv(gym.Env):
         players_num = self.game.players_num
         self.observation_space = spaces.Dict({
             "board": spaces.Box(low=0, high=len(self.game.CELLS)-1, shape=self.game.size, dtype=np.uint8),
+            **{f"player{i}_movements": spaces.Discrete(self.max_movements) for i in range(players_num)},
             **{f"player{i}_direction": spaces.Discrete(4) for i in range(players_num)},
             **{f"player{i}_has_orb": spaces.Discrete(2) for i in range(players_num)} |
-            ({f"player{i}_position": spaces.Box(low=0, high=max(self.game.size), shape=(2,), dtype=np.uint8) for i in range(players_num)} if players_num > 1 else {})
+            ({f"player{i}_position": spaces.Box(low=0, high=max(self.game.size), shape=(2,), dtype=np.uint8) for i in range(players_num)} if players_num > 1 else {}) | 
+            ({"player_turn": spaces.Discrete(2)} if players_num > 1 else {})
         })
         self.action_space = spaces.Discrete(len(self.game.ACTIONS))
 
@@ -94,12 +96,12 @@ class PitsAndOrbsEnv(gym.Env):
         players_num = self.game.players_num
 
         return OrderedDict(
-            [("board", obs),
-            *((f"player{i}_movements", self.game.players_movements[i]) for i in range(players_num)),
-            *((f"player{i}_direction", self.game.players_direction[i]) for i in range(players_num)),
+            [("board", obs), 
+            *((f"player{i}_movements", self.game.players_movements[i]) for i in range(players_num)), 
+            *((f"player{i}_direction", self.game.players_direction[i]) for i in range(players_num)), 
             *((f"player{i}_has_orb", int(self.game.players_have_orb[i])) for i in range(players_num))] + 
             ([(f"player{i}_position", np.array(self.game.players_pos[i])) for i in range(players_num)] if players_num > 1 else []) + 
-            ([(f"player_turn", self.game.player_turn)] if players_num > 1 else [])
+            ([("player_turn", self.game.player_turn)] if players_num > 1 else [])
         )
 
     def _get_info(self):
@@ -107,7 +109,7 @@ class PitsAndOrbsEnv(gym.Env):
 
 
 if __name__ == "__main__":
-    env = PitsAndOrbsEnv()
+    env = PitsAndOrbsEnv(players_num=2)
     print(env.observation_space.sample())
     print()
 

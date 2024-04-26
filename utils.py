@@ -34,7 +34,7 @@ def make_env(render_mode="rgb_array", max_movements=30, return_obs_type="partial
 if __name__ == "__main__":
     print()
 
-    env = make_env()
+    env = make_env(players_num=2)
     print("Sampled obs from gym api:", env.observation_space.sample())
     print()
 
