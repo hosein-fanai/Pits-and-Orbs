@@ -163,8 +163,12 @@ class Agent:
         algorithm = list(configs.keys())[0].upper()
         configs = configs[algorithm]
 
+        size = configs["make_env"]["size"].replace('(', '').replace(')', '').replace(' ', '').split(',')
+        size = [int(i) for i in size]
+        del configs["make_env"]["size"]
+
         kwargs = {
-            "make_env": {**configs["make_env"]},
+            "make_env": {**configs["make_env"], "size": size},
             "model_file_name": configs["model_file_name"],
             "gif_file_name": configs["gif_file_name"],
         }
