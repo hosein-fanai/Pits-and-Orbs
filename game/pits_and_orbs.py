@@ -558,6 +558,9 @@ class PitsAndOrbs:
 
         return cell_type6_num+cell_type7_num
 
+    def _change_player_turn(self):
+        self.player_turn = (self.player_turn + 1) % self.players_num
+
     def play1(self, show_obs_or_state=0, show_help=True, 
                 clear=True): # input=4 quits the game
         rewards = 0
@@ -626,8 +629,7 @@ class PitsAndOrbs:
         done = self.is_done()
         info = self.get_info()        
 
-        # change player turn
-        self.player_turn = (self.player_turn + 1) % self.players_num
+        self._change_player_turn()
 
         # reset current step's rewards
         self._current_reward = 0
@@ -768,10 +770,6 @@ class PitsAndOrbs:
         return {
             "filled pits#": self._calc_filled_pits(),
             "all pits#": self.pit_num,
-            **{f"player{i} position": self.players_pos[i] for i in range(self.players_num)},
-            **{f"player{i} direction": PitsAndOrbs.DIRECTIONS[self.players_direction[i]] for i in range(self.players_num)},
-            **{f"player{i} has orb": self.players_have_orb[i] for i in range(self.players_num)},
-            **{f"player{i} movements#": self.players_movements[i] for i in range(self.players_num)},
         }
   
     def clear_screen(self):

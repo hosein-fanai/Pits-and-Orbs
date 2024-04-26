@@ -47,19 +47,24 @@ class PitsAndOrbsEnv(gym.Env):
     def step(self, action):
         player_turn = self.game.player_turn
 
-        if self.game.players_movements[player_turn] < self.max_movements:
-            obs, reward, done, info = self.game.step(action)
-            observation = self._get_obs(obs)
-
-            if self.game.players_movements[player_turn] == self.max_movements - 1:
-                done = True # truncated
+        # this is for when the player still has moves to play
+        if self.game.players_movements[player_turn] < self.max_movements: 
+            raw_obs, reward, done, info = self.game.step(action)
+            observation = self._get_obs(raw_obs)
+            
+            flag = self._all_players_used_max_moves()
+            done = done or flag # truncates if all the players have used their max moves
 
             return observation, reward, done, info
 
-        observation = self.reset()
+        # this is for when the player doesn't have any moves to play, but others may have or have not
+        raw_obs = self.game.get_obs()
+        observation = self._get_obs(raw_obs)
         reward = 0
-        done = False
+        done = self._all_players_used_max_moves() 
         info = self.game.get_info()
+
+        self.game._change_player_turn()
 
         return observation, reward, done, info
 
@@ -78,14 +83,23 @@ class PitsAndOrbsEnv(gym.Env):
     def close(self):
         self.game.close_game()
 
+    def _all_players_used_max_moves(self):
+        flag = True
+        for i in range(self.game.players_num):
+            flag = flag and (self.game.players_movements[i] == self.max_movements)
+
+        return flag
+
     def _get_obs(self, obs):
         players_num = self.game.players_num
 
         return OrderedDict(
             [("board", obs),
+            *((f"player{i}_movements", self.game.players_movements[i]) for i in range(players_num)),
             *((f"player{i}_direction", self.game.players_direction[i]) for i in range(players_num)),
             *((f"player{i}_has_orb", int(self.game.players_have_orb[i])) for i in range(players_num))] + 
-            ([(f"player{i}_position", np.array(self.game.players_pos[i])) for i in range(players_num)] if players_num > 1 else [])
+            ([(f"player{i}_position", np.array(self.game.players_pos[i])) for i in range(players_num)] if players_num > 1 else []) + 
+            ([(f"player_turn", self.game.player_turn)] if players_num > 1 else [])
         )
 
     def _get_info(self):
@@ -93,7 +107,7 @@ class PitsAndOrbsEnv(gym.Env):
 
 
 if __name__ == "__main__":
-    env = PitsAndOrbsEnv(players_num=2)
+    env = PitsAndOrbsEnv()
     print(env.observation_space.sample())
     print()
 
