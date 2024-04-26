@@ -29,7 +29,7 @@ class PitsAndOrbsEnv(gym.Env):
 
         self.game = PitsAndOrbs(pygame_mode=pygame_mode, **kwargs)
 
-        player_num = self.game.player_num
+        player_num = self.game.players_num
         self.observation_space = gym.spaces.Dict({
             "board": gym.spaces.Box(low=0, high=len(self.game.CELLS)-1, shape=self.game.size, dtype=np.uint8)} | {
             f"player{i}_direction": gym.spaces.Discrete(4) for i in range(player_num)} | {
@@ -45,11 +45,11 @@ class PitsAndOrbsEnv(gym.Env):
     def step(self, action):
         player_turn = self.game.player_turn
 
-        if self.game.player_movements[player_turn] < self.max_movements:
+        if self.game.players_movements[player_turn] < self.max_movements:
             obs, reward, done, info = self.game.step(action)
             observation = self._get_obs(obs)
 
-            if self.game.player_movements[player_turn] == self.max_movements - 1:
+            if self.game.players_movements[player_turn] == self.max_movements - 1:
                 done = True # truncated
 
             return observation, reward, done, info
@@ -77,20 +77,21 @@ class PitsAndOrbsEnv(gym.Env):
         self.game.close_game()
 
     def _get_obs(self, obs):
-        player_num = self.game.player_num
+        player_num = self.game.players_num
 
-        return OrderedDict([
-            ("board", obs),
-            *((f"player{i}_direction", self.game.player_directions[i]) for i in range(player_num)),
-            *((f"player{i}_has_orb", int(self.game.players_have_orb[i])) for i in range(player_num)),
-        ])
+        return OrderedDict(
+            [("board", obs),
+            *((f"player{i}_direction", self.game.players_direction[i]) for i in range(player_num)),
+            *((f"player{i}_has_orb", int(self.game.players_have_orb[i])) for i in range(player_num))] + 
+            ([(f"player{i}_position", self.game.players_pos[i]) for i in range(player_num)] if self.game.players_num > 1 else [])
+        )
 
     def _get_info(self):
         return self.game.get_info()
 
 
 if __name__ == "__main__":
-    env = PitsAndOrbsEnv()
+    env = PitsAndOrbsEnv(players_num=2)
     print(env.observation_space.sample())
     print()
 

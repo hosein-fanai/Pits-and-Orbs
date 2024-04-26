@@ -1,0 +1,18 @@
+DQN:
+  iterations: 10_000_000
+  iter_type: "step_wise" # or episode_wise
+  n_step: 4
+  target_soft_update: False
+
+  gamma: 0.99
+  buffer_size: 100_000
+  fill_buffer_episodes: 10
+
+  batch_size: 64
+  lr: !!float 5e-6
+
+  epsilon_fn: "polynomial_decay" # or None
+  epsilon_active_portion: 0.75
+
+  save_model_interval_portion: 0.1
+  save_model_reward_threshold: 5

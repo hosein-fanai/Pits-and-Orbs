@@ -9,7 +9,7 @@ A2C:
     size: (5, 5)
     orb_num: 5
     pit_num: 5
-    player_num: 1
+    players_num: 1
     seed: null
     onehot_obs: True
     norm_obs: False
