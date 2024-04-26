@@ -91,7 +91,7 @@ class PitsAndOrbsEnv(gym.Env):
 
 
 if __name__ == "__main__":
-    env = PitsAndOrbsEnv(players_num=2)
+    env = PitsAndOrbsEnv()
     print(env.observation_space.sample())
     print()
 
