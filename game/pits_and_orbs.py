@@ -770,8 +770,9 @@ class PitsAndOrbs:
         return {
             "filled pits#": self._calc_filled_pits(),
             "all pits#": self.pit_num,
+            **{f"player{i} movements#": self.players_movements[i] for i in range(self.players_num)},
         }
-  
+
     def clear_screen(self):
         os.system("cls" if os.name=="nt" else "clear")
 
