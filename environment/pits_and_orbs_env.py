@@ -33,7 +33,6 @@ class PitsAndOrbsEnv(gym.Env):
         players_num = self.game.players_num
         self.observation_space = spaces.Dict({
             "board": spaces.Box(low=0, high=len(self.game.CELLS)-1, shape=self.game.size, dtype=np.uint8),
-            **{f"player{i}_movements": spaces.Discrete(self.max_movements) for i in range(players_num)},
             **{f"player{i}_direction": spaces.Discrete(4) for i in range(players_num)},
             **{f"player{i}_has_orb": spaces.Discrete(2) for i in range(players_num)} |
             ({f"player{i}_position": spaces.Box(low=0, high=max(self.game.size), shape=(2,), dtype=np.uint8) for i in range(players_num)} if players_num > 1 else {}) | 
@@ -97,7 +96,6 @@ class PitsAndOrbsEnv(gym.Env):
 
         return OrderedDict(
             [("board", obs), 
-            *((f"player{i}_movements", self.game.players_movements[i]) for i in range(players_num)), 
             *((f"player{i}_direction", self.game.players_direction[i]) for i in range(players_num)), 
             *((f"player{i}_has_orb", int(self.game.players_have_orb[i])) for i in range(players_num))] + 
             ([(f"player{i}_position", np.array(self.game.players_pos[i])) for i in range(players_num)] if players_num > 1 else []) + 
