@@ -42,8 +42,13 @@ The environment outputs an observation object as an OrderedDict from ```step``` 
 ```python
 {
     "board": observation, # observation is an np array (depends on the return_obs_type argument)
-    "player0_direction": player_directions[i], # i is the current player's index
-    "player0_has_orb": players_have_orb[i] # i is the current player's index
+    f"player{i}_direction": players_direction[i], # i is the current player's index
+    f"player{i}_has_orb": players_have_orb[i], 
+    f"player{i}_position": players_have_orb[i], 
+    .
+    .
+    .
+    "player_turn": player_turn, # indicates the next player's turn; only available while players_num > 1
 }
 ```
 
@@ -168,6 +173,12 @@ python3 . -h
 For headless servers write this line of command before the CLI above in the same line (make sure you have installed xfvb thoroughly):
 ```bash
 xvfb-run -s "-screen 0 1400x900x24"
+```
+
+After using the ```--train``` flag to train a model, you can trace training metrics via tensorbaord if the the model is training by an algorithm written in stable-baselines3.
+
+```bash
+tensorboard --logdir=./logs
 ```
 
 ### .gif file example
