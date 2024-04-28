@@ -351,9 +351,9 @@ class PitsAndOrbs:
             case "tried to move forward":
                 reward = -0.1
             case "tried to move forward to cell type 1":
-                reward = 0 # -0.1
+                reward = 0. # -0.1
             case "tried to move forward to cell type 2":
-                reward = 0 # 0.1
+                reward = 0. # 0.1
             case "tried to pick orb up with already having another orb":
                 reward = -0.1
             case "tried to pick orb up in cell type 4":
@@ -563,7 +563,7 @@ class PitsAndOrbs:
 
     def play1(self, show_obs_or_state=0, show_help=True, 
                 clear=True): # input=4 quits the game
-        rewards = 0
+        rewards = 0.
 
         while True:
             self.show_board(show_obs_or_state=show_obs_or_state, 
@@ -588,7 +588,7 @@ class PitsAndOrbs:
     def play2(self, show_obs_or_state=0, show_help=False, 
             clear=False, print_is_enabled=True): # play function for pygame
         obs = None
-        rewards = 0
+        rewards = 0.
         done = False
         info = None
         if print_is_enabled:
@@ -632,7 +632,7 @@ class PitsAndOrbs:
         self._change_player_turn()
 
         # reset current step's rewards
-        self._current_reward = 0
+        self._current_reward = 0.
 
         return obs, reward, done, info
 
