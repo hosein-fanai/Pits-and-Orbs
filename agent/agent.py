@@ -64,6 +64,7 @@ class Agent:
 
         print()
         print("Total rewards were:", rewards)
+        print("Final info:", info)
         print("The episode was fps:", int(frames_counter/(time.time()-start)))
         print("The episode length was:", step+1)
 
