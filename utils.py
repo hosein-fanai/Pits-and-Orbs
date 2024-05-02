@@ -1,7 +1,8 @@
-from gym import wrappers
+from gym.wrappers import FrameStack
 
 from environment.pits_and_orbs_env import PitsAndOrbsEnv
 
+from wrappers.steps_limit import StepsLimit
 from wrappers.onehot_observation import OnehotObservation
 from wrappers.normalize_observation import NormalizeObservation
 from wrappers.concat_observation import ConcatObservation
@@ -9,13 +10,16 @@ from wrappers.concat_observation import ConcatObservation
 
 def make_env(render_mode="rgb_array", max_movements=30, return_obs_type="partial obs",
             reward_function_type='0', reward_function=None, size=(5, 5), orb_num=5, 
-            pit_num=5, players_num=1, seed=None, onehot_obs=True, norm_obs=False, 
-            num_stack=None):
+            pit_num=5, players_num=1, seed=None, max_steps=None, onehot_obs=True, 
+            norm_obs=False, num_stack=None):
     env = PitsAndOrbsEnv(render_mode=render_mode, pygame_with_help=False, 
                         max_movements=max_movements, return_obs_type=return_obs_type, 
                         reward_function_type=reward_function_type, reward_function=reward_function,
                         size=size, orb_num=orb_num, pit_num=pit_num, players_num=players_num, 
                         seed=seed)
+
+    if max_steps is not None:
+        env = StepsLimit(env, max_steps=max_steps)
 
     if onehot_obs and not norm_obs:
         env = OnehotObservation(env)
@@ -25,8 +29,8 @@ def make_env(render_mode="rgb_array", max_movements=30, return_obs_type="partial
 
     env = ConcatObservation(env)
 
-    if num_stack:
-        env = wrappers.FrameStack(env, num_stack=num_stack)
+    if num_stack is not None:
+        env = FrameStack(env, num_stack=num_stack)
 
     return env
 
