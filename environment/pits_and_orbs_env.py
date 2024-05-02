@@ -107,7 +107,10 @@ class PitsAndOrbsEnv(gym.Env):
 
 
 if __name__ == "__main__":
-    env = PitsAndOrbsEnv(players_num=2)
+    env = PitsAndOrbsEnv(size=(7, 7), players_num=2)
+
+    print()
+    print("---Sampled observation space from gym api:")
     print(env.observation_space.sample())
     print()
 
@@ -117,6 +120,7 @@ if __name__ == "__main__":
 
     for _ in range(10):
         action = env.action_space.sample()
+        # action = int(input("Current Action: "))
         obs, reward, done, info = env.step(action)
 
         print("Action:", action)
