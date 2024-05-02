@@ -17,7 +17,7 @@ class StepsLimit(gym.Wrapper):
     def step(self, action):
         self.current_step += 1
         
-        truncated = True if self.current_step>self.max_steps else False
+        truncated = True if self.current_step>=self.max_steps else False
 
         state, reward, done, info = self.env.step(action)
         done = done or truncated
