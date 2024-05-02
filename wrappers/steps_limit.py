@@ -3,9 +3,10 @@ import gym
 
 class StepsLimit(gym.Wrapper):
         
-    def __init__(self, env, max_steps):
+    def __init__(self, env, max_steps, punish_on_limit=False):
         super().__init__(env)
         self.max_steps = max_steps
+        self.punish_on_limit = punish_on_limit
 
         self.current_step = 0
 
@@ -21,5 +22,8 @@ class StepsLimit(gym.Wrapper):
 
         state, reward, done, info = self.env.step(action)
         done = done or truncated
+
+        if self.punish_on_limit and truncated:
+            reward += -1.
         
         return state, reward, done, info

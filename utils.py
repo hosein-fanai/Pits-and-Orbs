@@ -10,8 +10,8 @@ from wrappers.concat_observation import ConcatObservation
 
 def make_env(render_mode="rgb_array", max_movements=30, return_obs_type="partial obs",
             reward_function_type='0', reward_function=None, size=(5, 5), orb_num=5, 
-            pit_num=5, players_num=1, seed=None, max_steps=None, onehot_obs=True, 
-            norm_obs=False, num_stack=None):
+            pit_num=5, players_num=1, seed=None, max_steps=None, punish_on_limit=False, 
+            onehot_obs=True, norm_obs=False, num_stack=None):
     env = PitsAndOrbsEnv(render_mode=render_mode, pygame_with_help=False, 
                         max_movements=max_movements, return_obs_type=return_obs_type, 
                         reward_function_type=reward_function_type, reward_function=reward_function,
@@ -19,7 +19,7 @@ def make_env(render_mode="rgb_array", max_movements=30, return_obs_type="partial
                         seed=seed)
 
     if max_steps is not None:
-        env = StepsLimit(env, max_steps=max_steps)
+        env = StepsLimit(env, max_steps=max_steps, punish_on_limit=punish_on_limit)
 
     if onehot_obs and not norm_obs:
         env = OnehotObservation(env)
