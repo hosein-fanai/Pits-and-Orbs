@@ -49,7 +49,7 @@ class PitsAndOrbsEnv(gym.Env):
         self.action_space = spaces.Discrete(action_n)
 
     def _get_final_step_reward(self, done):
-        filled_all_pits = self.game._calc_filled_pits()
+        filled_all_pits = self.game._calc_filled_pits() == self.game.pit_num
 
         if done and filled_all_pits:
             reward_type = "episode is done successfully"

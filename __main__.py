@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from agent.agent import Agent
+from rl.agent import Agent
 
 
 parser = ArgumentParser(description="A multi-agent-system project (called Pits and Orbs) which is able to be used via cli.")
