@@ -33,7 +33,6 @@ class PitsAndOrbsEnv(gym.Env):
         team_size = self.game.team_size
         team_num = self.game.team_num
         position_board = self.game._return_board_type == "position"
-
         self.observation_space = spaces.Dict({
             "board": spaces.Box(low=0, high=len(self.game.CELLS)-1, shape=self.game.size, dtype=np.uint8),
             **{f"player{i}_direction": spaces.Discrete(4) for i in range(team_size)},
@@ -48,6 +47,40 @@ class PitsAndOrbsEnv(gym.Env):
         else:
             action_n = len(self.game.ACTIONS) - 1
         self.action_space = spaces.Discrete(action_n)
+
+    def _get_final_step_reward(self, done):
+        filled_all_pits = self.game._calc_filled_pits()
+
+        reward_type = "episode is done successfully" if filled_all_pits and done else "episode is done unsuccessfully"
+        reward = self.game._reward_function(flag=reward_type) 
+
+        return reward
+
+    def _all_players_used_max_moves(self):
+        flag = True
+        for team in self.game.teams:
+            for player in team.players:
+                flag = flag and (player.movements == self.max_movements)
+
+        return flag
+
+    def _get_obs(self, obs):
+        team_size = self.game.team_size
+        team_num = self.game.team_num
+        team = self.game.current_team
+        position_board = self.game._return_board_type == "position"
+
+        return OrderedDict(
+            [("board", obs), 
+            *((f"player{i}_direction", player.direction) for i, player in enumerate(team.players)), 
+            *((f"player{i}_has_orb", int(player.has_orb)) for i, player in enumerate(team.players))] + 
+            ([(f"player{i}_position", np.array(player.position)) for i, player in enumerate(team.players)] if (team_size > 1) or (team_num > 1) or position_board else []) + 
+            ([(f"player_turn", team.player_turn)] if team_size > 1 else []) + 
+            ([(f"team_turn", self.game.team_turn)] if team_num > 1 else [])
+        )
+
+    def _get_info(self):
+        return self.game._get_info()
 
     def reset(self, seed=None, options=None):
         obs, info = self.game.reset_game(seed=seed)
@@ -94,40 +127,6 @@ class PitsAndOrbsEnv(gym.Env):
 
     def close(self):
         self.game.close_game()
-
-    def _get_final_step_reward(self, done):
-        filled_all_pits = self.game._calc_filled_pits()
-
-        reward_type = "episode is done successfully" if filled_all_pits and done else "episode is done unsuccessfully"
-        reward = self.game._reward_function(flag=reward_type) 
-
-        return reward
-
-    def _all_players_used_max_moves(self):
-        flag = True
-        for team in self.game.teams:
-            for player in team.players:
-                flag = flag and (player.movements == self.max_movements)
-
-        return flag
-
-    def _get_obs(self, obs):
-        team_size = self.game.team_size
-        team_num = self.game.team_num
-        team = self.game.current_team
-        position_board = self.game._return_board_type == "position"
-
-        return OrderedDict(
-            [("board", obs), 
-            *((f"player{i}_direction", player.direction) for i, player in enumerate(team.players)), 
-            *((f"player{i}_has_orb", int(player.has_orb)) for i, player in enumerate(team.players))] + 
-            ([(f"player{i}_position", np.array(player.position)) for i, player in enumerate(team.players)] if (team_size > 1) or (team_num > 1) or position_board else []) + 
-            ([(f"player_turn", team.player_turn)] if team_size > 1 else []) + 
-            ([(f"team_turn", self.game.team_turn)] if team_num > 1 else [])
-        )
-
-    def _get_info(self):
-        return self.game._get_info()
 
 
 if __name__ == "__main__":

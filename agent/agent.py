@@ -54,8 +54,9 @@ class Agent:
             if done:
                 print()
                 print("One episode is done with ", end="")
-                for i in range(env.game.players_num):
-                    print(f"(player{i} having done {info[f'player{i} movements#']} movements) ", end="")
+                for i in range(env.game.team_num):
+                    for j in range(env.game.team_size):
+                        print(f"(team{i}_player{j} having done {info[f'team{i}_player{j}_movements#']} movements) ", end="")
                 print()
                 break
 
