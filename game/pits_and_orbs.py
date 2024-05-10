@@ -385,6 +385,8 @@ class PitsAndOrbs:
                 reward = 1.
             case "episode is done unsuccessfully":
                 reward = 0.
+            case "episode is not done":
+                reward = 0.
             case _:
                 raise Exception("Wrong flag for computing reward.")
         
@@ -429,6 +431,8 @@ class PitsAndOrbs:
                 reward = 1.
             case "episode is done unsuccessfully":
                 reward = -1.
+            case "episode is not done":
+                reward = 0.
             case _:
                 raise Exception("Wrong flag for computing reward.")
 

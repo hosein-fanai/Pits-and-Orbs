@@ -51,7 +51,12 @@ class PitsAndOrbsEnv(gym.Env):
     def _get_final_step_reward(self, done):
         filled_all_pits = self.game._calc_filled_pits()
 
-        reward_type = "episode is done successfully" if filled_all_pits and done else "episode is done unsuccessfully"
+        if done and filled_all_pits:
+            reward_type = "episode is done successfully"
+        elif done and not filled_all_pits:
+            reward_type = "episode is done unsuccessfully"
+        else:
+            reward_type = "episode is not done"
         reward = self.game._reward_function(flag=reward_type) 
 
         return reward
