@@ -13,6 +13,11 @@ class ConcatObservation(gym.ObservationWrapper):
         for dim in env.observation_space["board"].shape:
             board_size *= dim
 
+        # try:
+        #     movements_size = env.observation_space["player0_movements"].shape[0]
+        # except:
+        #     movements_size = 1
+
         try:
             direction_size = env.observation_space["player0_direction"].shape[0]
         except:
@@ -28,7 +33,7 @@ class ConcatObservation(gym.ObservationWrapper):
         self.observation_space = spaces.Box(
             low=0, 
             high=1, 
-            shape=(board_size+(direction_size+1+position_size)*team_size+turn_size,), 
+            shape=(board_size+(direction_size+1+position_size)*team_size+turn_size,), # shape=(board_size+(movements_size+direction_size+1+position_size)*players_num+turn_size,), 
             dtype=np.uint8,
         )
 
@@ -38,6 +43,7 @@ class ConcatObservation(gym.ObservationWrapper):
         position_board = self.game._return_board_type == "position"
 
         board = observation["board"].flatten()
+        # player_movements = [np.array(observation[f"player{i}_movements"]).flatten() for i in range(players_num)]
         player_direction = [np.array(observation[f"player{i}_direction"]).flatten() for i in range(team_size)]
         player_has_orb = [np.array([observation[f"player{i}_has_orb"]]).flatten() for i in range(team_size)]
         player_position = [observation[f"player{i}_position"].flatten() for i in range(team_size)] if team_size > 1 else []
