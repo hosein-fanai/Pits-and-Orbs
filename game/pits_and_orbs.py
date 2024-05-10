@@ -116,7 +116,7 @@ class PitsAndOrbs:
 
         pygame.display.flip()
 
-    def _display_objects(self): # TODO: highlight neighbor cells + render full state when having two teams
+    def _display_objects(self): # TODO: highlight neighbor cells + render full state when having two teams + mark filled pits with their corresponding team color
         if self._return_obs_type in ("partial obs", "neighbors"):
             boards = [team.get_memory() for team in self.teams]
         elif self._return_obs_type == "full state":
@@ -377,7 +377,9 @@ class PitsAndOrbs:
                 reward = 1.
             case "tried to put orb down on cell type 7":
                 reward = 0.
-            case "tried to throw orb away in cell type 7":
+            case "tried to throw another team's orb away in cell type 7":
+                reward = 1.
+            case "tried to throw its team's orb away in cell type 7":
                 reward = 0.
             case "tried to throw orb away in cell types other than 7":
                 reward = 0.
@@ -423,8 +425,10 @@ class PitsAndOrbs:
                 reward = 10.
             case "tried to put orb down on cell type 7":
                 reward = -0.1
-            case "tried to throw orb away in cell type 7":
+            case "tried to throw another team's orb away in cell type 7":
                 reward = 1.
+            case "tried to throw its team's orb away in cell type 7":
+                reward = -1.
             case "tried to throw orb away in cell types other than 7":
                 reward = -0.1
             case "episode is done successfully":
@@ -575,9 +579,12 @@ class PitsAndOrbs:
             for team in self.teams:
                 if (player_pos_i, player_pos_j) in team.filled_pits:
                     team.rem_from_filled_pits((player_pos_i, player_pos_j))
-                    break
 
-            self._add_to_current_reward(flag="tried to throw orb away in cell type 7")
+                    self._add_to_current_reward(flag="tried to throw another team's orb away in cell type 7")
+                    break
+            else:
+                self._add_to_current_reward(flag="tried to throw its team's orb away in cell type 7")
+            
         else:
             self._add_to_current_reward(flag="tried to throw orb away in cell types other than 7")
 
