@@ -45,7 +45,7 @@ class Agent:
             frames_counter += 1
 
             if print_rewards:
-                print(f"\rTotal Rewards: {rewards:.4f}, Current Reward: {reward:.4f}", end="")
+                print(f"\rTotal Rewards: {rewards:.4f}, Current Reward: {reward:.4f}, Taken Action: {action}", end="")
 
             if return_frames:
                 frame = env.render("rgb_array")
