@@ -30,17 +30,20 @@ class PitsAndOrbsEnv(gym.Env):
 
         self.game = PitsAndOrbs(pygame_mode=pygame_mode, **kwargs)
 
-        team_size = self.game.team_size
-        team_num = self.game.team_num
-        position_board = self.game._return_board_type == "position"
+        self._team_size = self.game.team_size
+        self._team_num = self.game.team_num
+        self._position_board = self.game._return_board_type == "position"
+
+        player_position_condition = (self._team_size > 1) or (self._team_num > 1) or self._position_board
         self.observation_space = spaces.Dict({
             "board": spaces.Box(low=0, high=len(self.game.CELLS)-1, shape=self.game.size, dtype=np.uint8), 
-            **{f"player{i}_movements": spaces.Discrete(self.max_movements) for i in range(team_size)}, 
-            **{f"player{i}_direction": spaces.Discrete(4) for i in range(team_size)},
-            **{f"player{i}_has_orb": spaces.Discrete(2) for i in range(team_size)} |
-            ({f"player{i}_position": spaces.Box(low=0, high=max(self.game.size), shape=(2,), dtype=np.uint8) for i in range(team_size)} if (team_size > 1) or (team_num > 1) or position_board else {}) | 
-            ({"player_turn": spaces.Discrete(2)} if team_size > 1 else {}) | 
-            ({"team_turn": spaces.Discrete(2)} if team_num > 1 else {})
+            **{f"player{i}_movements": spaces.Discrete(self.max_movements) for i in range(self._team_size)}, 
+            **{f"player{i}_direction": spaces.Discrete(4) for i in range(self._team_size)},
+            **{f"player{i}_has_orb": spaces.Discrete(2) for i in range(self._team_size)} |
+            ({f"player{i}_position": spaces.Box(low=0, high=max(self.game.size), shape=(2,), dtype=np.uint8) \
+                for i in range(self._team_size)} if player_position_condition else {}) | 
+            ({"player_turn": spaces.Discrete(2)} if self._team_size > 1 else {}) | 
+            ({"team_turn": spaces.Discrete(2)} if self._team_num > 1 else {})
         })
 
         if self.game.team_num > 1:
@@ -71,19 +74,16 @@ class PitsAndOrbsEnv(gym.Env):
         return flag
 
     def _get_obs(self, obs):
-        team_size = self.game.team_size
-        team_num = self.game.team_num
-        team = self.game.current_team
-        position_board = self.game._return_board_type == "position"
+        player_position_condition = (self._team_size > 1) or (self._team_num > 1) or self._position_board
 
         return OrderedDict(
             [("board", obs), 
-            *((f"player{i}_movements", player.movements) for i, player in enumerate(team.players)), 
-            *((f"player{i}_direction", player.direction) for i, player in enumerate(team.players)), 
-            *((f"player{i}_has_orb", int(player.has_orb)) for i, player in enumerate(team.players))] + 
-            ([(f"player{i}_position", np.array(player.position)) for i, player in enumerate(team.players)] if (team_size > 1) or (team_num > 1) or position_board else []) + 
-            ([(f"player_turn", team.player_turn)] if team_size > 1 else []) + 
-            ([(f"team_turn", self.game.team_turn)] if team_num > 1 else [])
+            *((f"player{i}_movements", player.movements) for i, player in enumerate(self._team.players)), 
+            *((f"player{i}_direction", player.direction) for i, player in enumerate(self._team.players)), 
+            *((f"player{i}_has_orb", int(player.has_orb)) for i, player in enumerate(self._team.players))] + 
+            ([(f"player{i}_position", np.array(player.position)) for i, player in enumerate(self._team.players)] if player_position_condition else []) + 
+            ([(f"player_turn", self._team.player_turn)] if self._team_size > 1 else []) + 
+            ([(f"team_turn", self.game.team_turn)] if self._team_num > 1 else [])
         )
 
     def _get_info(self):
