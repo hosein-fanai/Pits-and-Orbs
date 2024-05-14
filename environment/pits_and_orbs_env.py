@@ -58,7 +58,7 @@ class PitsAndOrbsEnv(gym.Env):
             reward_type = "episode is done unsuccessfully"
         else:
             reward_type = "episode is not done"
-        reward = self.game._reward_function(flag=reward_type) 
+        reward = self.game._reward_function(flag=reward_type)
 
         return reward
 
@@ -114,6 +114,7 @@ class PitsAndOrbsEnv(gym.Env):
         done = self._all_players_used_max_moves() 
         info = self.game._get_info()
 
+        reward += self.game._reward_function(flag="the player has depleted its movements")
         reward += self._get_final_step_reward(done)
 
         self.game._change_team_and_player_turn()

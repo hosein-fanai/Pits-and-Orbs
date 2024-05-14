@@ -383,6 +383,8 @@ class PitsAndOrbs:
                 reward = 0.
             case "tried to throw orb away in cell types other than 7":
                 reward = 0.
+            case "the player has depleted its movements":
+                reward = 0.
             case "episode is done successfully":
                 reward = 1.
             case "episode is done unsuccessfully":
@@ -430,6 +432,8 @@ class PitsAndOrbs:
             case "tried to throw its team's orb away in cell type 7":
                 reward = -1.
             case "tried to throw orb away in cell types other than 7":
+                reward = -0.1
+            case "the player has depleted its movements":
                 reward = -0.1
             case "episode is done successfully":
                 reward = 1.
