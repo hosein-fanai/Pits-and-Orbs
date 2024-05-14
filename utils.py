@@ -12,8 +12,8 @@ def make_env(render_mode="rgb_array", max_movements=30,
             size=(5, 5), orb_num=5, pit_num=5, player_num=1, team_num=1, 
             return_obs_type="partial obs", return_board_type="array", 
             reward_function_type='0', reward_function=None, seed=None,
-            max_steps=None, punish_on_limit=False, 
-            onehot_obs=True, norm_obs=False, num_stack=None):
+            max_steps=None, punish_on_limit=False, onehot_obs=["all"], 
+            norm_obs=["movements"], concat_obs=["all"], num_stack=None):
     env = PitsAndOrbsEnv(render_mode=render_mode, pygame_with_help=False, max_movements=max_movements,
                         size=size, orb_num=orb_num, pit_num=pit_num, player_num=player_num, team_num=team_num, 
                         return_obs_type=return_obs_type, return_board_type=return_board_type, 
@@ -22,13 +22,14 @@ def make_env(render_mode="rgb_array", max_movements=30,
     if max_steps is not None:
         env = StepsLimit(env, max_steps=max_steps, punish_on_limit=punish_on_limit)
 
-    if onehot_obs and not norm_obs:
-        env = OnehotObservation(env)
+    if onehot_obs is not None:
+        env = OnehotObservation(env, obs_keys=onehot_obs)
 
-    if norm_obs and not onehot_obs:
-        env = NormalizeObservation(env)
+    if norm_obs is not None:
+        env = NormalizeObservation(env, obs_keys=norm_obs)
 
-    env = ConcatObservation(env)
+    if concat_obs is not None:
+        env = ConcatObservation(env)
 
     if num_stack is not None:
         env = FrameStack(env, num_stack=num_stack)
