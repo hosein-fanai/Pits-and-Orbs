@@ -422,7 +422,7 @@ class PitsAndOrbs:
             case "tried to put orb down on cell type 4":
                 reward = -0.1
             case "tried to put orb down on cell type 5":
-                reward = 10.
+                reward = 1.
             case "tried to put orb down on cell type 7":
                 reward = -0.1
             case "tried to throw another team's orb away in cell type 7":
