@@ -45,9 +45,9 @@ class OnehotObservation(gym.ObservationWrapper):
             position = {f"player{i}_position": env.observation_space[f"player{i}_position"] for i in range(self._team_size)}
         
         if "turn" in self._obs_keys or "all" in self._obs_keys: # TODO: make it support rectangular grids
-            turn = ({"player_turn": spaces.Box(low=0, high=1, shape=(1,), dtype=np.uint8)} if self._team_size > 1 else {})
+            turn = {"player_turn": spaces.Box(low=0, high=1, shape=(1,), dtype=np.uint8)} if self._team_size > 1 else {}
         else:
-            turn = env.observation_space["player_turn"]
+            turn = {"player_turn": env.observation_space["player_turn"]}
 
         self.observation_space = spaces.Dict({
             "board": board,
@@ -92,20 +92,20 @@ class OnehotObservation(gym.ObservationWrapper):
         if "position" in self._obs_keys or "all" in self._obs_keys:
             condition = (self._team_size > 1) or (self._team_num > 1) or self._position_board
             depth = max(self.env.game.size)
-            position = ([(f"player{i}_position", self._onehot(observation[f"player{i}_position"], depth=depth)) for i in range(self._team_size)] if condition else [])
+            position = [(f"player{i}_position", self._onehot(observation[f"player{i}_position"], depth=depth)) for i in range(self._team_size)] if condition else []
         else:
             position = ((f"player{i}_position", observation[f"player{i}_position"]) for i in range(self._team_size))
 
         if "turn" in self._obs_keys or "all" in self._obs_keys:
-            turn = ([("player_turn", np.array([observation["player_turn"]]))] if self._team_size > 1 else [])
+            turn = [("player_turn", np.array([observation["player_turn"]]))] if self._team_size > 1 else []
         else:
-            turn = ("player_turn", observation["player_turn"])
+            turn = [("player_turn", observation["player_turn"])]
 
         return OrderedDict([
             board,
             *movements,
             *direction,
             *has_orb,
-            position,
-            turn,
+            *position,
+            *turn,
         ])

@@ -74,15 +74,17 @@ class PitsAndOrbsEnv(gym.Env):
         return flag
 
     def _get_obs(self, obs):
-        player_position_condition = (self._team_size > 1) or (self._team_num > 1) or self._position_board
+        pos_condition = (self._team_size > 1) or (self._team_num > 1) or self._position_board
+
+        current_team = self.game.current_team
 
         return OrderedDict(
             [("board", obs), 
-            *((f"player{i}_movements", player.movements) for i, player in enumerate(self._team.players)), 
-            *((f"player{i}_direction", player.direction) for i, player in enumerate(self._team.players)), 
-            *((f"player{i}_has_orb", int(player.has_orb)) for i, player in enumerate(self._team.players))] + 
-            ([(f"player{i}_position", np.array(player.position)) for i, player in enumerate(self._team.players)] if player_position_condition else []) + 
-            ([(f"player_turn", self._team.player_turn)] if self._team_size > 1 else []) + 
+            *((f"player{i}_movements", player.movements) for i, player in enumerate(current_team.players)), 
+            *((f"player{i}_direction", player.direction) for i, player in enumerate(current_team.players)), 
+            *((f"player{i}_has_orb", int(player.has_orb)) for i, player in enumerate(current_team.players))] + 
+            ([(f"player{i}_position", np.array(player.position)) for i, player in enumerate(current_team.players)] if pos_condition else []) + 
+            ([(f"player_turn", current_team.player_turn)] if self._team_size > 1 else []) + 
             ([(f"team_turn", self.game.team_turn)] if self._team_num > 1 else [])
         )
 

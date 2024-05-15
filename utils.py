@@ -8,11 +8,15 @@ from wrappers.normalize_observation import NormalizeObservation
 from wrappers.concat_observation import ConcatObservation
 
 
+OBS_TYPES = ["board", "movements", "direction", "has_orb", "position", "turn"] # Equales to ["all"]
+OBS_TYPES_WITHOUT_MOVEMENTS = OBS_TYPES.copy(); OBS_TYPES_WITHOUT_MOVEMENTS.remove("movements")
+
+
 def make_env(render_mode="rgb_array", max_movements=30, 
             size=(5, 5), orb_num=5, pit_num=5, player_num=1, team_num=1, 
             return_obs_type="partial obs", return_board_type="array", 
             reward_function_type='0', reward_function=None, seed=None,
-            max_steps=None, punish_on_limit=False, onehot_obs=["all"], 
+            max_steps=None, punish_on_limit=False, onehot_obs=OBS_TYPES_WITHOUT_MOVEMENTS, 
             norm_obs=["movements"], concat_obs=["all"], num_stack=None):
     env = PitsAndOrbsEnv(render_mode=render_mode, pygame_with_help=False, max_movements=max_movements,
                         size=size, orb_num=orb_num, pit_num=pit_num, player_num=player_num, team_num=team_num, 

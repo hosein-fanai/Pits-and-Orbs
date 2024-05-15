@@ -47,7 +47,7 @@ class NormalizeObservation(gym.ObservationWrapper):
         if "turn" in self._obs_keys or "all" in self._obs_keys:
             turn = {"player_turn": spaces.Box(low=0., high=1., shape=(1,), dtype=np.float32)} if self._team_size > 1 else {}
         else:
-            turn = env.observation_space["player_turn"]
+            turn = {"player_turn": env.observation_space["player_turn"]}
 
         self.observation_space = spaces.Dict({
             "board": board,
@@ -86,15 +86,15 @@ class NormalizeObservation(gym.ObservationWrapper):
             position = ((f"player{i}_position", observation[f"player{i}_position"]) for i in range(self._team_size))
 
         if "turn" in self._obs_keys or "all" in self._obs_keys:
-            turn = ([("player_turn", np.array([observation["player_turn"]]))] if self._team_size > 1 else [])
+            turn = [("player_turn", np.array([observation["player_turn"]]))] if self._team_size > 1 else []
         else:
-            turn = ("player_turn", observation["player_turn"])
+            turn = [("player_turn", observation["player_turn"])]
 
         return OrderedDict([
             board,
             *movements,
             *direction,
             *has_orb,
-            position,
-            turn,
+            *position,
+            *turn,
         ])
