@@ -172,7 +172,7 @@ class DQN:
 
         return action, None
 
-    def run_training(self, iterations, iter_type="step_wise", n_step=4, 
+    def train(self, iterations, iter_type="step_wise", n_step=4, 
                     batch_size=64, gamma=0.99, warmup=10, target_update_interval=5_000, 
                     soft_update=False, epsilon_fn=None, epsilon_active_portion=0.75, 
                     save_model_interval_portion=50_000, save_model_reward_threshold=4):

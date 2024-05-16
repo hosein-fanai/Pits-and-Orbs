@@ -11,19 +11,22 @@ from utils import make_env
 
 class Agent:
 
-    def __init__(self, model_path=None):
+    def __init__(self, model_path=None, model=None):
+        assert model_path is None and model is not None
+        assert model_path is not None and model is None
+
+        self.drop_model()
+
         if model_path:
             self.load_model(model_path)
 
-    def _run_rl_model_single_step(self, obs, deterministic=False, **kwargs):
-        action, _ = self.model.predict(obs, deterministic=deterministic, **kwargs)
+        if model:
+            self.model = model
 
-        return action
-
-    def _run_classical(self, obs):
+    def _run_rules_one_step(self, obs):
         return None
 
-    def _agent_runner(self, env, max_steps=500, fps=None, 
+    def _run_agent_one_episode(self, env, max_steps=500, fps=None, 
                 deterministic_action_choice=False, 
                 print_rewards=True, return_frames=True):
         assert return_frames and env.game._pygame_mode
@@ -183,28 +186,56 @@ class Agent:
         
         return {"algorithm": algorithm, "params": params, "kwargs": kwargs}
 
-    def predict(self, obs, deterministic=False):
-        if self.model:
-            return self._run_rl_model_single_step(obs, deterministic)
-        else:
-            return self._run_classical(obs)
+    def load_model(self, model_path, algorithm, force=False):
+        if self.model is not None:
+            print("Warning! Object already has a loaded model.")
+            if not force:
+                print("Load failed due to not forcing the load. Continuing to use the previous loaded model.")
 
-    def load_model(self, model_path):
+                return
+
         if model_path.endswith(".zip"):
             try:
-                from stable_baselines3 import A2C
+                from stable_baselines3 import A2C, PPO
             except:
                 print("Please install Stable-Baselines3 by: pip install stable-baselines3==1.8.0")
                 return None
 
-            self.model = A2C.load(model_path)
-        elif model_path.endswith(".h5"):
-            from agent.dqn import DQN
 
-            self.model = DQN()
-            self.load_model(model_path)
+            if algorithm == "A2C":
+                self.model = A2C.load(model_path)
+            elif algorithm == "PPO":
+                self.model = PPO.load(model_path)
 
-    def train_agent(self, config_file_path, do_save=True):
+        elif model_path.endswith(".h5") \
+            or model_path.endswith(".keras") \
+            or model_path.endswith("/"):
+            from rl.dqn import DQN
+
+
+            if algorithm == "DQN":
+                self.model = DQN()
+                self.load_model(model_path)
+            else:
+                raise Exception("Wrong algorithm for a tensorflow/keras model.")
+
+    def drop_model(self):
+        self.model = None
+
+    def predict(self, obs, use_rules=False, deterministic=False, **kwargs):
+        if self.model:
+            action, _ = self.model.predict(obs, deterministic=deterministic, **kwargs)
+
+            return action
+        else:
+            if use_rules:
+                return self._run_rules_one_step(obs)
+            else:
+                print("No model has been loaded, and the use_rules arg was set to false.")
+
+                return None
+
+    def train(self, config_file_path, do_save=True):
         configs = Agent.load_train_configs(config_file_path)
 
         if configs["algorithm"] == "DQN":
@@ -238,14 +269,15 @@ class Agent:
 
         return self.model
 
-    def run_agent(self, config_file_path):
+    def run(self, config_file_path):
         configs = Agent.load_run_configs(config_file_path)
 
         model_path = os.path.join("./models", configs["algorithm"], configs["kwargs"]["model_file_name"])
-        self.load_model(model_path)
+        self.load_model(model_path=model_path, algorithm=configs["algorithm"])
+
         env = make_env(**configs["kwargs"]["make_env"])
 
-        _, frames = self._agent_runner(env, **configs["params"])
+        _, frames = self._run_agent_one_episode(env, **configs["params"])
 
         env.close()
 
