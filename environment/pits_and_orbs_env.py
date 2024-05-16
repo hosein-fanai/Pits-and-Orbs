@@ -90,8 +90,8 @@ class PitsAndOrbsEnv(gym.Env):
             *((f"player{i}_direction", player.direction) for i, player in enumerate(current_team.players)), 
             *((f"player{i}_has_orb", int(player.has_orb)) for i, player in enumerate(current_team.players))] + 
             ([(f"player{i}_position", np.array(player.position, dtype=np.uint8)) for i, player in enumerate(current_team.players)] if pos_condition else []) + 
-            ([(f"player_turn", current_team.player_turn)] if self._team_size > 1 else []) + 
-            ([(f"team_turn", self.game.team_turn)] if self._team_num > 1 else [])
+            ([(f"player_turn", current_team.player_turn)] if self._team_size > 1 else []) # + 
+            # ([(f"team_turn", self.game.team_turn)] if self._team_num > 1 else [])
         )
 
     def _get_info(self):
@@ -146,7 +146,7 @@ class PitsAndOrbsEnv(gym.Env):
 
 
 if __name__ == "__main__":
-    env = PitsAndOrbsEnv(size=7, player_num=2, team_num=2, return_board_type="positions")
+    env = PitsAndOrbsEnv(size=7, player_num=2, team_num=1, return_board_type="positions")
 
     print()
     print("---Sampled observation space from gym api:")
