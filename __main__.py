@@ -20,6 +20,6 @@ assert not(run_flag and train_flag) and (run_flag or train_flag)
 agent = Agent()
 
 if run_flag:
-    agent.run_agent(config_file_path=config_file_path)
+    agent.run(config_file_path=config_file_path)
 elif train_flag:
-    agent.train_agent(config_file_path=config_file_path)
+    agent.train(config_file_path=config_file_path)
