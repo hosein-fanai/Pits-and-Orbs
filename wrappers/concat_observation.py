@@ -70,27 +70,27 @@ class ConcatObservation(gym.ObservationWrapper):
         if "movements" in self._obs_keys or "all" in self._obs_keys:
             player_movements = [np.array(observation[f"player{i}_movements"]).flatten() for i in range(self._team_size)]
         else:
-            board = []
+            player_movements = []
 
         if "direction" in self._obs_keys or "all" in self._obs_keys:
             player_direction = [np.array(observation[f"player{i}_direction"]).flatten() for i in range(self._team_size)]
         else:
-            board = []
+            player_direction = []
 
         if "has_orb" in self._obs_keys or "all" in self._obs_keys:
             player_has_orb = [np.array([observation[f"player{i}_has_orb"]]).flatten() for i in range(self._team_size)]
         else:
-            board = []
+            player_has_orb = []
 
         if "position" in self._obs_keys or "all" in self._obs_keys:
             player_position = [observation[f"player{i}_position"].flatten() for i in range(self._team_size)] if self._team_size > 1 else []
         else:
-            board = []
+            player_position = []
 
         if "turn" in self._obs_keys or "all" in self._obs_keys:
             condition = (self._team_size > 1) or (self._team_num > 1) or self._position_board
             player_turn = [np.array(observation[f"player_turn"]).flatten()] if condition else []
         else:
-            board = []
+            player_turn = []
 
         return np.concatenate([board, *player_movements, *player_direction, *player_has_orb, *player_position, *player_turn], axis=0)

@@ -68,14 +68,12 @@ class OnehotObservation(gym.ObservationWrapper):
 
     def observation(self, observation):
         if "board" in self._obs_keys or "all" in self._obs_keys:
-            depth = len(self.env.game.CELLS)
-            board = ("board", self._onehot(observation["board"], depth=depth))
+            board = ("board", self._onehot(observation["board"], depth=len(self.env.game.CELLS)))
         else:
             board = ("board", observation["board"])
 
         if "movements" in self._obs_keys or "all" in self._obs_keys:
-            depth = self.env.max_movements+1
-            movements = ((f"player{i}_movements", self._onehot(np.array(observation[f"player{i}_movements"]), depth=depth)) for i in range(self._team_size))
+            movements = ((f"player{i}_movements", self._onehot(np.array(observation[f"player{i}_movements"]), depth=self.env.max_movements+1)) for i in range(self._team_size))
         else:
             movements = ((f"player{i}_movements", observation[f"player{i}_movements"]) for i in range(self._team_size))
 
@@ -91,8 +89,7 @@ class OnehotObservation(gym.ObservationWrapper):
         
         if "position" in self._obs_keys or "all" in self._obs_keys:
             condition = (self._team_size > 1) or (self._team_num > 1) or self._position_board
-            depth = max(self.env.game.size)
-            position = [(f"player{i}_position", self._onehot(observation[f"player{i}_position"], depth=depth)) for i in range(self._team_size)] if condition else []
+            position = [(f"player{i}_position", self._onehot(observation[f"player{i}_position"], depth=max(self.env.game.size))) for i in range(self._team_size)] if condition else []
         else:
             position = ((f"player{i}_position", observation[f"player{i}_position"]) for i in range(self._team_size))
 

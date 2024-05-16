@@ -33,7 +33,7 @@ def make_env(render_mode="rgb_array", max_movements=30,
         env = NormalizeObservation(env, obs_keys=norm_obs)
 
     if concat_obs is not None:
-        env = ConcatObservation(env)
+        env = ConcatObservation(env, obs_keys=concat_obs)
 
     if num_stack is not None:
         env = FrameStack(env, num_stack=num_stack)
