@@ -12,8 +12,7 @@ from utils import make_env
 class Agent:
 
     def __init__(self, model_path=None, model=None):
-        assert model_path is None and model is not None
-        assert model_path is not None and model is None
+        assert model_path is None or model is None
 
         self.drop_model()
 
