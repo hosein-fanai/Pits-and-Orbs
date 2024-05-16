@@ -32,11 +32,17 @@ class PitsAndOrbsEnv(gym.Env):
 
         self._team_size = self.game.team_size
         self._team_num = self.game.team_num
-        self._position_board = self.game._return_board_type == "position"
+        self._position_board = (self.game._return_board_type == PitsAndOrbs.BOARDS[1])
+
+        if self._position_board:
+            board = spaces.Box(low=0, high=max(self.game.size), shape=(self.game.pit_num+self.game.orb_num, 2), dtype=np.uint8)
+        else:
+            board = spaces.Box(low=0, high=len(self.game.CELLS)-1, shape=self.game.size, dtype=np.uint8)
 
         player_position_condition = (self._team_size > 1) or (self._team_num > 1) or self._position_board
+
         self.observation_space = spaces.Dict({
-            "board": spaces.Box(low=0, high=len(self.game.CELLS)-1, shape=self.game.size, dtype=np.uint8), 
+            "board": board, 
             **{f"player{i}_movements": spaces.Discrete(self.max_movements) for i in range(self._team_size)}, 
             **{f"player{i}_direction": spaces.Discrete(4) for i in range(self._team_size)},
             **{f"player{i}_has_orb": spaces.Discrete(2) for i in range(self._team_size)} |
@@ -140,7 +146,7 @@ class PitsAndOrbsEnv(gym.Env):
 
 
 if __name__ == "__main__":
-    env = PitsAndOrbsEnv(size=(7, 7), player_num=2, team_num=2)
+    env = PitsAndOrbsEnv(size=7, player_num=2, team_num=2, return_board_type="positions")
 
     print()
     print("---Sampled observation space from gym api:")
@@ -148,6 +154,7 @@ if __name__ == "__main__":
     print()
 
     obs = env.reset()
+    print("---Returned observation from reset function:")
     print(obs)
     print()
 
