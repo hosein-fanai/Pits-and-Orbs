@@ -31,14 +31,14 @@ class PitsAndOrbs:
                 return_obs_type="partial obs", return_board_type="array", 
                 pygame_mode=True, pygame_with_help=True, 
                 reward_function_type='0', reward_function=None, seed=None):
-        if len(size) == 1:
+        if isinstance(size, int):
             self.size = (size, size)
         elif len(size) == 2:
             self.size = size
         else:
             raise Exception("Wrong size for game's grid; expected size argument's shape to be 1 or 2.")
 
-        assert (size[0] * size[1]) > (orb_num + pit_num + player_num)
+        assert (self.size[0] * self.size[1]) > (orb_num + pit_num + player_num)
         self.orb_num = orb_num
         self.pit_num = pit_num
         self.player_num = player_num
