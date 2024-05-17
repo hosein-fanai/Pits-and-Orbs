@@ -4,6 +4,8 @@ __pycache__
 build
 game/build/
 
+debug
+
 logs/A2C/A2C_2/
 logs/A2C/A2C_3/
 logs/test/

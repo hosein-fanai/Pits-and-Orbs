@@ -541,8 +541,12 @@ class PitsAndOrbs:
         player_pos_i, player_pos_j = self.current_player.position
         if self.board_state[player_pos_i, player_pos_j] == 4:
             self.board_state[player_pos_i, player_pos_j] = 1
-            self.current_player.add_orb(
-                orb_index=self._orbs_pos.index((player_pos_i, player_pos_j)))
+            try:
+                self.current_player.add_orb(
+                    orb_index=self._orbs_pos.index((player_pos_i, player_pos_j)))
+            except ValueError:
+                self._write_status_to_file()
+                raise
 
             self._add_to_current_reward(flag="tried to pick orb up in cell type 4")
         else:
@@ -569,7 +573,7 @@ class PitsAndOrbs:
                 self.board_state[player_pos_i, player_pos_j] = 7
                 self._orbs_pos[self.current_player.remove_orb()] \
                     = (player_pos_i, player_pos_j)
-                
+
                 self.current_team.add_to_filled_pits((player_pos_i, player_pos_j))
                 self._move_orbs_randomly()
 
@@ -666,6 +670,21 @@ class PitsAndOrbs:
                 self._orbs_pos[orb_index] = (orb_pos_i, orb_pos_j)
             case 6:
                 self.board_state[orb_pos] = prev_cell
+
+    def _write_status_to_file(self):
+        if not os.path.exists("./debug"):
+            os.makedirs("./debug")
+
+        np.savetxt("./debug/board.txt", self.board_state, delimiter=",")
+
+        np.savetxt("./debug/memory.txt", self.current_team.get_memory(), delimiter=",")
+
+        with open("./debug/orbs_pos.txt", "w") as file:
+            for orb_pos in self._orbs_pos:
+                file.write(str(orb_pos) + "\n")
+
+        with open("./debug/current_player_position.txt", "w") as file:
+            file.write(str(self.current_player.position) + "\n")
 
     def _calc_filled_pits(self):
         cell_type6_num = len(np.where(self.board_state==6)[0])
