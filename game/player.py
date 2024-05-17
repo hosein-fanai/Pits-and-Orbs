@@ -61,6 +61,8 @@ class Player:
     
     def remove_orb(self):
         self.has_orb = False
+
+        orb_index = self._orb_index
         self._orb_index = -1
         
-        return self._orb_index
+        return orb_index

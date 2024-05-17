@@ -116,7 +116,7 @@ class PitsAndOrbs:
 
         pygame.display.flip()
 
-    def _display_objects(self): # TODO: highlight neighbor cells + render full state when having two teams + mark filled pits with their corresponding team color
+    def _display_objects(self): # TODO: highlight neighbor cells + mark filled pits with their corresponding team color + create seperate windows for each team
         if self._return_obs_type in ("partial obs", "neighbors"):
             boards = [team.get_memory() for team in self.teams]
         elif self._return_obs_type == "full state":
@@ -581,8 +581,8 @@ class PitsAndOrbs:
         player_pos_i, player_pos_j = self.current_player.position
         if self.board_state[player_pos_i, player_pos_j] == 7:
             self.board_state[player_pos_i, player_pos_j] = 5
+            self._throw_orb_randomly(orb_pos=(player_pos_i, player_pos_j))
 
-            self._throw_orb_randomly()
             for team in self.teams:
                 if (player_pos_i, player_pos_j) in team.filled_pits:
                     team.rem_from_filled_pits((player_pos_i, player_pos_j))
@@ -595,14 +595,20 @@ class PitsAndOrbs:
         else:
             self._add_to_current_reward(flag="tried to throw orb away in cell types other than 7")
 
-    def _throw_orb_randomly(self):
+    def _throw_orb_randomly(self, orb_pos):
+        orb_index = self._orbs_pos.index(orb_pos)
+
         valid_new_orb_poses = np.where(self.board_state == 0) # only empty cells are valid for orbs to be thrown to
-        valid_new_orb_poses = list(zip(*valid_new_orb_poses))
+        if len(valid_new_orb_poses) > 0:
+            valid_new_orb_poses = list(zip(*valid_new_orb_poses))
 
-        new_orb_pos_index = np.random.randint(len(valid_new_orb_poses)-1)
-        new_orb_pos = valid_new_orb_poses[new_orb_pos_index]
+            new_orb_pos_index = np.random.randint(len(valid_new_orb_poses)-1)
+            new_orb_pos = valid_new_orb_poses[new_orb_pos_index]
 
-        self.board_state[new_orb_pos] = 2
+            self.board_state[new_orb_pos] = 2
+            self._orbs_pos[orb_index] = new_orb_pos
+        else:
+            pass # there are no empty cells left
 
     def _move_orbs_randomly(self):
         for orb_cell in (2, 4):
@@ -614,10 +620,11 @@ class PitsAndOrbs:
                 if np.random.rand() > 0.1: # don't move this orb
                     continue
                 else: # randomly move this orb
-                        direction = np.random.randint(len(PitsAndOrbs.DIRECTIONS))
-                        self._move_orb(orb_pos, direction)
+                    direction = np.random.randint(len(PitsAndOrbs.DIRECTIONS))
+                    self._move_orb_forward(orb_pos, direction)
 
-    def _move_orb(self, orb_pos, direction):
+    def _move_orb_forward(self, orb_pos, direction):
+        orb_index = self._orbs_pos.index(orb_pos)
         orb_pos_i, orb_pos_j = orb_pos
 
         match self.board_state[orb_pos_i, orb_pos_j]:
@@ -643,16 +650,20 @@ class PitsAndOrbs:
         match self.board_state[orb_pos_i, orb_pos_j]:
             case 0:
                 self.board_state[orb_pos_i, orb_pos_j] = 2
+                self._orbs_pos[orb_index] = (orb_pos_i, orb_pos_j)
             case 1:
                 self.board_state[orb_pos_i, orb_pos_j] = 4
+                self._orbs_pos[orb_index] = (orb_pos_i, orb_pos_j)
             case 2:
                 self.board_state[orb_pos] = prev_cell
             case 3:
                 self.board_state[orb_pos_i, orb_pos_j] = 6
+                self._orbs_pos[orb_index] = (orb_pos_i, orb_pos_j)
             case 4:
                 self.board_state[orb_pos] = prev_cell
             case 5:
                 self.board_state[orb_pos_i, orb_pos_j] = 7
+                self._orbs_pos[orb_index] = (orb_pos_i, orb_pos_j)
             case 6:
                 self.board_state[orb_pos] = prev_cell
 
@@ -734,13 +745,17 @@ class PitsAndOrbs:
                     poses.append((not_seen_index_i, not_seen_index_j))
 
             orbs_index = []
-            for orb_cell in (2, 4, 6):
+            for orb_cell in (2, 4, 6, 7):
                 orb_pos_Is, orb_pos_Js = np.where(array==orb_cell)
                 if len(orb_pos_Is) < 1:
                     continue
 
                 for orb_pos in zip(orb_pos_Is, orb_pos_Js):
-                    orbs_index.append(self._orbs_pos.index(orb_pos))
+                    try:
+                        orbs_index.append(self._orbs_pos.index(orb_pos))
+                    except ValueError:
+                        pass # This happens due to inconsistensy between board and memory since an orb randomly has moved and it has not yet registered in the memory.
+                    
             orbs_index.sort()
             for orb_index in range(self.orb_num):
                 if orb_index in orbs_index:
