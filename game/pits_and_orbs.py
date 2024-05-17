@@ -541,7 +541,8 @@ class PitsAndOrbs:
         player_pos_i, player_pos_j = self.current_player.position
         if self.board_state[player_pos_i, player_pos_j] == 4:
             self.board_state[player_pos_i, player_pos_j] = 1
-            self.current_player.has_orb = True
+            self.current_player.add_orb(
+                orb_index=self._orbs_pos.index((player_pos_i, player_pos_j)))
 
             self._add_to_current_reward(flag="tried to pick orb up in cell type 4")
         else:
@@ -558,14 +559,16 @@ class PitsAndOrbs:
         match self.board_state[player_pos_i, player_pos_j]:
             case 1:
                 self.board_state[player_pos_i, player_pos_j] = 4
-                self.current_player.has_orb = False
+                self._orbs_pos[self.current_player.remove_orb()] \
+                    = (player_pos_i, player_pos_j)
 
                 self._add_to_current_reward(flag="tried to put orb down on cell type 1")
             case 4:
                 self._add_to_current_reward(flag="tried to put orb down on cell type 4")
             case 5:
                 self.board_state[player_pos_i, player_pos_j] = 7
-                self.current_player.has_orb = False
+                self._orbs_pos[self.current_player.remove_orb()] \
+                    = (player_pos_i, player_pos_j)
                 
                 self.current_team.add_to_filled_pits((player_pos_i, player_pos_j))
                 self._move_orbs_randomly()
@@ -716,7 +719,7 @@ class PitsAndOrbs:
             not_seen_index_i, not_seen_index_j = self.size
 
             pits_index = []
-            for pit_cell in (3, 5, 7):
+            for pit_cell in (3, 5, 6, 7):
                 pit_pos_Is, pit_pos_Js = np.where(array==pit_cell)
                 if len(pit_pos_Is) < 1:
                     continue

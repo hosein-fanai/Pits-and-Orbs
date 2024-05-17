@@ -11,6 +11,8 @@ class Player:
         self._has_orb = False
         self._movements = 0
 
+        self._orb_index = -1
+
     @property
     def position(self):
         return self._position
@@ -52,3 +54,13 @@ class Player:
         assert value >= 0
 
         self._movements = value
+
+    def add_orb(self, orb_index):
+        self.has_orb = True
+        self._orb_index = orb_index
+    
+    def remove_orb(self):
+        self.has_orb = False
+        self._orb_index = -1
+        
+        return self._orb_index
