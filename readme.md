@@ -57,12 +57,12 @@ The environment outputs an observation object as an OrderedDict from ```step``` 
 To build the game simply use the following:
 
 ```bash
-python3 game/setup.py build
+python game/setup.py build
 ```
 
 or create an installer while building the game:
 ```bash
-python3 game/setup.py bdist_msi
+python game/setup.py bdist_msi
 ```
 
 If the ```pygame_with_help``` argument is set to ```True```, the PyGame window will have extra height to show players' movements and a guide to what every possible coloring and shapes mean. For illustration purposes, ```pygame_with_help=True``` is set and shown below:
@@ -121,25 +121,25 @@ virtual_display.start()
 To use the game and its environment you can install the below necessary dependencies in a new virtual environment (all the materials are tested in Python=3.10.10), but these do not include the usages for RL agents. First create and activate a new environment or just skip this part (if you are using a headless server like Colab make sure to go through with the last section's guide in your dev environment).
 
 ```bash
-python3 venv -env pae_env
-source pae_env/bin/activate
+python venv -env pao_env
+source pao_env/bin/activate
 ```
 Then, install project's dependencies for rendering it on a PyGame window.
 
 ```bash
-python3 -m pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 To use RL models you should either install TensorFlow or Stable Baselines3 which uses PyTorch. As a result, TensorFlow models require you to:
 
 ```bash
-python3 -m pip install tensorflow==2.10.0
+python -m pip install tensorflow==2.10.0
 ```
 
 And stable-baselines3 requires you to:
 
 ```bash
-python3 -m pip install stable-baselines3==1.8.0 tensorboard
+python -m pip install stable-baselines3==1.8.0 tensorboard
 ```
 
 ## Making the Environment
@@ -162,12 +162,12 @@ In the ```wrappers``` directory, there various useful observation wrappers to ma
 The CLI is used for running or training RL models on the environment. Be aware that ```-r``` or ```--run``` means to run the model on the environment according to the ./configs/#/run.yaml, and save the frames in a .gif file. Also, ```-t``` or ```--train``` means to train a new model according to the ./configs/#/train.yaml settings.
 
 ```bash
-python3 . [--run or --train] "config file path"
+python . [--run or --train] "config file path"
 ```
 
 For more information use CLI's help command:
 ```bash
-python3 . -h
+python . -h
 ```
 
 For headless servers write this line of command before the CLI above in the same line (make sure you have installed xfvb thoroughly):
