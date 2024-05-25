@@ -45,7 +45,8 @@ class ConcatObservation(gym.ObservationWrapper):
 
         has_orb_size = 1
 
-        position_size = 2 if self._team_size > 1 else 0
+        self._pos_condition = (self._team_size > 1) or (self._team_num > 1) or self._position_board
+        position_size = 2 if self._pos_condition else 0
         position_size = position_size*max(self.game.size) if len(env.observation_space.get("player0_position", np.zeros((1,))).shape) > 1 else position_size
 
         turn_size = 1 if self._team_size > 1 else 0
@@ -112,8 +113,7 @@ class ConcatObservation(gym.ObservationWrapper):
             player_has_orb = []
 
         if self._wrap_position:
-            condition = (self._team_size > 1) or (self._team_num > 1) or self._position_board
-            player_position = [observation[f"player{i}_position"].flatten() for i in range(self._team_size)] if condition else []
+            player_position = [observation[f"player{i}_position"].flatten() for i in range(self._team_size)] if self._pos_condition else []
         else:
             player_position = []
 
