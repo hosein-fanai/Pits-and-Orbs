@@ -6,9 +6,10 @@ from wrappers.steps_limit import StepsLimit
 from wrappers.onehot_observation import OnehotObservation
 from wrappers.normalize_observation import NormalizeObservation
 from wrappers.concat_observation import ConcatObservation
+from wrappers.self_play_wrapper import SelfPlayWrapper
 
 
-OBS_TYPES = ["board", "movements", "direction", "has_orb", "position", "turn"] # Equales to ["all"]
+OBS_TYPES = ["board", "movements", "direction", "has_orb", "position", "turn"] # is equal to ["all"]
 OBS_TYPES_WITHOUT_MOVEMENTS = OBS_TYPES.copy(); OBS_TYPES_WITHOUT_MOVEMENTS.remove("movements")
 
 
@@ -17,7 +18,7 @@ def make_env(render_mode="rgb_array", max_movements=30,
             return_obs_type="partial obs", return_board_type="array", 
             reward_function_type='0', reward_function=None, seed=None,
             max_steps=None, punish_on_limit=False, onehot_obs=OBS_TYPES_WITHOUT_MOVEMENTS, 
-            norm_obs=["movements"], concat_obs=["all"], num_stack=None):
+            norm_obs=["movements"], concat_obs=["all"], num_stack=None, self_play_wrapper=False):
     env = PitsAndOrbsEnv(render_mode=render_mode, pygame_with_help=False, max_movements=max_movements,
                         size=size, orb_num=orb_num, pit_num=pit_num, player_num=player_num, team_num=team_num, 
                         return_obs_type=return_obs_type, return_board_type=return_board_type, 
@@ -37,6 +38,9 @@ def make_env(render_mode="rgb_array", max_movements=30,
 
     if num_stack is not None:
         env = FrameStack(env, num_stack=num_stack)
+
+    if self_play_wrapper:
+        env = SelfPlayWrapper(env)
 
     return env
 

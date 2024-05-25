@@ -6,6 +6,10 @@ from PIL import Image
 
 import os
 
+from collections import deque
+
+import random
+
 from utils import make_env
 
 
@@ -73,6 +77,21 @@ class Agent:
 
         return rewards, frames
 
+    def train_with_self_play(self, env, first_copy_model, models_bank_maxlen=5, self_play_epochs=20, 
+                            iterations=5_000_000, log_interval=1_000):
+        models_bank = deque(maxlen=models_bank_maxlen)
+        models_bank.append(first_copy_model)
+
+        for epoch in range(self_play_epochs):
+            print(f"\rWorking on epoch: #{epoch+1}", end='')
+
+            opponent_model_idx = random.randint(0, len(models_bank)-1)
+            opponent_model = models_bank[opponent_model_idx]
+            env.env_method("set_opponent_model", model=opponent_model)
+
+            self.model.learn(total_timesteps=iterations, log_interval=log_interval, reset_num_timesteps=False)
+            models_bank.append(self.model)
+
     @staticmethod
     def create_gif(frames, file_path):
         frame_images = [Image.fromarray(frame) for frame in frames]
@@ -86,7 +105,7 @@ class Agent:
         )
 
     @staticmethod
-    def load_train_configs(config_file_path):
+    def load_train_configs(config_file_path): # TODO: make it more generic for the config files (for example: 2 or 3 dicts for any args)
         print("* Loading configs for training from", config_file_path)
         with open(config_file_path) as stream:
             configs = yaml.safe_load(stream)
@@ -156,7 +175,7 @@ class Agent:
         return {"algorithm": algorithm, "params": params, "kwargs": kwargs}
 
     @staticmethod
-    def load_run_configs(config_file_path):
+    def load_run_configs(config_file_path): # TODO: make it more generic for the config files (for example: 2 or 3 dicts for any args)
         print("* Loading configs for running from", config_file_path)
         with open(config_file_path) as stream:
             configs = yaml.safe_load(stream)
@@ -221,6 +240,12 @@ class Agent:
     def drop_model(self):
         self.model = None
 
+    def set_model(self, model):
+        self.model = model
+ 
+    def get_model(self):
+        return self.model
+
     def predict(self, obs, use_rules=False, deterministic=False, **kwargs):
         if self.model:
             action, _ = self.model.predict(obs, deterministic=deterministic, **kwargs)
@@ -238,8 +263,8 @@ class Agent:
         configs = Agent.load_train_configs(config_file_path)
 
         if configs["algorithm"] == "DQN":
-            from agent.dqn import DQN
-            from agent.train_utils import plot_train_history
+            from rl.dqn import DQN
+            from rl.train_utils import plot_train_history
 
 
             env = make_env(**configs["kwargs"]["make_env"])
@@ -259,7 +284,11 @@ class Agent:
             vec_env = make_vec_env(lambda: make_env(**configs["kwargs"]["make_env"]), n_envs=configs["kwargs"]["n_env"])
             self.model = A2C("MlpPolicy", vec_env,  **configs["params"], tensorboard_log=f"./logs/A2C")
 
-            self.model.learn(total_timesteps=configs["kwargs"]["iterations"], log_interval=configs["kwargs"]["log_interval"])
+            if configs["kwargs"]["make_env"].get("team_num", 1) >= 2:
+                self.model.learn(total_timesteps=configs["kwargs"]["iterations"], log_interval=configs["kwargs"]["log_interval"])
+            else:
+                model_copy = A2C("MlpPolicy", vec_env,  **configs["params"])
+                self.train_with_self_play(vec_env, model_copy, **configs["kwargs"])
 
         vec_env.close()
         if do_save:
