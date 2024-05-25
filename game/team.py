@@ -61,6 +61,18 @@ class Team:
     def rem_from_filled_pits(self, pit_pos):
         self._filled_pits.remove(pit_pos)
 
+    def get_filled_pits_positions(self):
+        not_found_index = max(self.game.size)
+
+        pits_positions = []
+        for pit_pos in self.game._pits_pos:
+            if pit_pos in self._filled_pits:
+                pits_positions.append(pit_pos)
+            else:
+                pits_positions.append((not_found_index, not_found_index))
+
+        return pits_positions
+
     def update_memory(self, neighbors):
         self._memory.update(neighbors, self.current_player.position)
 

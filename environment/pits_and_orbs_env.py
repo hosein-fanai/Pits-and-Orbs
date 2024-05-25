@@ -48,6 +48,7 @@ class PitsAndOrbsEnv(gym.Env):
             **{f"player{i}_has_orb": spaces.Discrete(2) for i in range(self._team_size)} |
             ({f"player{i}_position": spaces.Box(low=0, high=max(self.game.size), shape=(2,), dtype=np.uint8) \
                 for i in range(self._team_size)} if self._pos_condition else {}) | 
+            ({"filled_pits_positions": spaces.Box(low=0, high=max(self.game.size), shape=(self.game.pit_num, 2), dtype=np.uint8)} if self._team_num > 1 else {}) | 
             ({"player_turn": spaces.Discrete(2)} if self._team_size > 1 else {})
         })
 
@@ -87,6 +88,7 @@ class PitsAndOrbsEnv(gym.Env):
             *((f"player{i}_direction", player.direction) for i, player in enumerate(current_team.players)), 
             *((f"player{i}_has_orb", int(player.has_orb)) for i, player in enumerate(current_team.players))] + 
             ([(f"player{i}_position", np.array(player.position, dtype=np.uint8)) for i, player in enumerate(current_team.players)] if self._pos_condition else []) + 
+            ([(f"filled_pits_positions", np.array(current_team.get_filled_pits_positions(), dtype=np.uint8))] if self._team_num > 1 else []) + 
             ([(f"player_turn", current_team.player_turn)] if self._team_size > 1 else [])
         )
 
@@ -101,9 +103,10 @@ class PitsAndOrbsEnv(gym.Env):
     def step(self, action):
         # this is for when the player still has moves to play
         if self.game.current_player.movements < self.max_movements:
-            raw_obs, reward, done, info = self.game.step_game(action)
+            raw_obs, reward, done, info = self.game.step_game(action, change_turn=False)
             observation = self._get_obs(raw_obs)
-            
+            self.game._change_team_and_player_turn()
+
             flag = self._all_players_used_max_moves()
             done = done or flag # truncates if all the players have used their max moves
 
@@ -112,14 +115,11 @@ class PitsAndOrbsEnv(gym.Env):
             return observation, reward, done, info
 
         # this is for when the player doesn't have any moves to play, but others may have or have not
-        raw_obs = self.game._get_observation()
-        observation = self._get_obs(raw_obs)
-        reward = 0.
+        observation = self._get_obs(obs=self.game._get_observation())
+        reward = self.game._reward_function(flag="the player has depleted its movements") + \
+            self._get_final_step_reward(done)
         done = self._all_players_used_max_moves() 
         info = self.game._get_info()
-
-        reward += self.game._reward_function(flag="the player has depleted its movements")
-        reward += self._get_final_step_reward(done)
 
         self.game._change_team_and_player_turn()
 
@@ -142,7 +142,7 @@ class PitsAndOrbsEnv(gym.Env):
 
 
 if __name__ == "__main__":
-    env = PitsAndOrbsEnv(size=7, player_num=2, team_num=1, return_board_type="positions")
+    env = PitsAndOrbsEnv(size=7, player_num=2, team_num=2)
 
     print()
     print("---Sampled observation space from gym api:")
@@ -154,9 +154,9 @@ if __name__ == "__main__":
     print(obs)
     print()
 
-    for _ in range(10):
+    for _ in range(20):
         action = env.action_space.sample()
-        # action = int(input("Current Action: "))
+        # action = int(input(f"Current Action for team# {env.game.team_turn}: "))
         obs, reward, done, info = env.step(action)
 
         print("Action:", action)

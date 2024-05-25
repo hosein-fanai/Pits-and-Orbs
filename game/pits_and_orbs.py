@@ -823,19 +823,16 @@ class PitsAndOrbs:
     def current_player(self):
         return self.current_team.current_player
 
-    def step_game(self, action):
-        # self._hist_actions.append(action)
-        # self._hist_board.append(self.board_state.copy())
-        # self._hist_orbs_pos.append(self._orbs_pos.copy())
+    def step_game(self, action, change_turn=True):
         self._do_action(action)
 
         observation = self._get_observation()
-        # self._hist_memory.append(observation.copy())
         reward = self._current_reward
         done = self._is_done()
         info = self._get_info()
 
-        self._change_team_and_player_turn()
+        if change_turn:
+            self._change_team_and_player_turn()
 
         # reset current step's rewards
         self._current_reward = 0.
