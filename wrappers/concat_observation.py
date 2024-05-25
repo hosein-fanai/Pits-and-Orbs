@@ -60,27 +60,27 @@ class ConcatObservation(gym.ObservationWrapper):
 
         if "movements" not in self._obs_keys and "all" not in self._obs_keys:
             self._wrap_movements = False
-            
+
             movements_size = 0
 
         if "direction" not in self._obs_keys and "all" not in self._obs_keys:
             self._wrap_direction = False
-            
+
             direction_size = 0
-        
+
         if "has_orb" not in self._obs_keys and "all" not in self._obs_keys:
             self._wrap_has_orb = False
-            
+
             has_orb_size = 0
-        
+
         if "position" not in self._obs_keys and "all" not in self._obs_keys:
             self._wrap_position = False
-            
+
             position_size = 0
-        
+
         if "turn" not in self._obs_keys and "all" not in self._obs_keys: 
             self._wrap_turn = False
-            
+
             turn_size = 0
 
         self.observation_space = spaces.Box(
@@ -112,13 +112,13 @@ class ConcatObservation(gym.ObservationWrapper):
             player_has_orb = []
 
         if self._wrap_position:
-            player_position = [observation[f"player{i}_position"].flatten() for i in range(self._team_size)] if self._team_size > 1 else []
+            condition = (self._team_size > 1) or (self._team_num > 1) or self._position_board
+            player_position = [observation[f"player{i}_position"].flatten() for i in range(self._team_size)] if condition else []
         else:
             player_position = []
 
         if self._wrap_turn:
-            condition = (self._team_size > 1) or (self._team_num > 1) or self._position_board
-            player_turn = [np.array(observation[f"player_turn"]).flatten()] if condition else []
+            player_turn = [np.array(observation[f"player_turn"]).flatten()] if self._team_size > 1 else []
         else:
             player_turn = []
 
