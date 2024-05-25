@@ -157,7 +157,7 @@ if __name__ == "__main__":
     print(obs)
     print()
 
-    for _ in range(20):
+    for _ in range(10):
         action = env.action_space.sample()
         # action = int(input(f"Current Action for team# {env.game.team_turn}: "))
         obs, reward, done, info = env.step(action)

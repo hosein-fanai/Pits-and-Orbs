@@ -49,10 +49,15 @@ class ConcatObservation(gym.ObservationWrapper):
         position_size = 2 if self._pos_condition else 0
         position_size = position_size*max(self.game.size) if len(env.observation_space.get("player0_position", np.zeros((1,))).shape) > 1 else position_size
 
+        filled_pits_positions_size = 1 if self._team_num > 1 else 0
+        for dim in env.observation_space.get("filled_pits_positions", np.zeros((1,))).shape:
+            filled_pits_positions_size *= dim
+
         turn_size = 1 if self._team_size > 1 else 0
 
         self._wrap_board, self._wrap_movements, self._wrap_direction, \
-            self._wrap_has_orb, self._wrap_position, self._wrap_turn = (True,) * 6
+            self._wrap_has_orb, self._wrap_position, self._wrap_filled_pits_positions, \
+            self._wrap_turn = (True,) * 7
 
         if "board" not in self._obs_keys and "all" not in self._obs_keys:
             self._wrap_board = False
@@ -79,6 +84,11 @@ class ConcatObservation(gym.ObservationWrapper):
 
             position_size = 0
 
+        if "filled_pits_positions" not in self._obs_keys and "all" not in self._obs_keys:
+            self._wrap_filled_pits_positions = False
+
+            filled_pits_positions_size = 0
+
         if "turn" not in self._obs_keys and "all" not in self._obs_keys: 
             self._wrap_turn = False
 
@@ -87,7 +97,7 @@ class ConcatObservation(gym.ObservationWrapper):
         self.observation_space = spaces.Box(
             low=0., 
             high=1., 
-            shape=(board_size+(movements_size+direction_size+has_orb_size+position_size)*self._team_size+turn_size,), 
+            shape=(board_size+(movements_size+direction_size+has_orb_size+position_size)*self._team_size+filled_pits_positions_size+turn_size,), 
             dtype=np.float32,
         )
 
@@ -117,16 +127,21 @@ class ConcatObservation(gym.ObservationWrapper):
         else:
             player_position = []
 
+        if self._wrap_filled_pits_positions:
+            filled_pits_positions = [np.array(observation["filled_pits_positions"]).flatten()] if self._team_num > 1 else []
+        else:
+            filled_pits_positions = []
+
         if self._wrap_turn:
             player_turn = [np.array(observation[f"player_turn"]).flatten()] if self._team_size > 1 else []
         else:
             player_turn = []
 
-        return np.concatenate([board, *player_movements, *player_direction, *player_has_orb, *player_position, *player_turn], axis=0)
+        return np.concatenate([board, *player_movements, *player_direction, *player_has_orb, *player_position, *filled_pits_positions, *player_turn], axis=0)
 
 
 if __name__ == "__main__":
-    env = PitsAndOrbsEnv(size=7, player_num=2, team_num=1, return_board_type="positions")
+    env = PitsAndOrbsEnv(size=7, player_num=2, team_num=2)
     env = ConcatObservation(env, obs_keys=["all"])
 
     print()
@@ -147,7 +162,7 @@ if __name__ == "__main__":
 
     for _ in range(10):
         action = env.action_space.sample()
-        # action = int(input("Current Action: "))
+        # action = int(input(f"Current Action for Team# {env.game.team_turn}: "))
         obs, reward, done, info = env.step(action)
 
         print("Action:", action)

@@ -9,7 +9,7 @@ from wrappers.concat_observation import ConcatObservation
 from wrappers.self_play_wrapper import SelfPlayWrapper
 
 
-OBS_TYPES = ["board", "movements", "direction", "has_orb", "position", "turn"] # is equal to ["all"]
+OBS_TYPES = ["board", "movements", "direction", "has_orb", "position", "filled_pits_positions", "turn"] # is equal to ["all"]
 OBS_TYPES_WITHOUT_MOVEMENTS = OBS_TYPES.copy(); OBS_TYPES_WITHOUT_MOVEMENTS.remove("movements")
 
 
@@ -46,7 +46,7 @@ def make_env(render_mode="rgb_array", max_movements=30,
 
 
 if __name__ == "__main__":
-    env = make_env(size=7, player_num=2, team_num=1, return_board_type="positions")
+    env = make_env(size=7, player_num=2, team_num=2)
 
     print()
     print("---Sampled observation space from gym api:")

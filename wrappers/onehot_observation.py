@@ -71,7 +71,14 @@ class OnehotObservation(gym.ObservationWrapper):
             position = {f"player{i}_position": obs_space for i in range(self._team_size)} if self._pos_condition else {}
         else:
             position = {f"player{i}_position": env.observation_space[f"player{i}_position"] for i in range(self._team_size)} if self._pos_condition else {}
-        
+
+        if "filled_pits_positions" in self._obs_keys or "all" in self._obs_keys:
+            self._wrap_filled_pits_positions = True
+
+            filled_pits_positions = {"filled_pits_positions": spaces.Box(low=0, high=1, shape=(self.game.pit_num, 2, max(self.game.size)+1), dtype=np.uint8)} if self._team_num > 1 else {}
+        else:
+            filled_pits_positions = {"filled_pits_positions": env.observation_space["filled_pits_positions"]} if self._team_num > 1 else {}
+
         if "turn" in self._obs_keys or "all" in self._obs_keys: # TODO: make it support rectangular grids
             self._wrap_turn = True
 
@@ -85,6 +92,7 @@ class OnehotObservation(gym.ObservationWrapper):
             **direction,
             **has_orb,
             **position,
+            **filled_pits_positions,
             **turn,
         })
 
@@ -137,6 +145,11 @@ class OnehotObservation(gym.ObservationWrapper):
         else:
             position = ((f"player{i}_position", observation[f"player{i}_position"]) for i in range(self._team_size)) if self._pos_condition else ()
 
+        if self._wrap_filled_pits_positions:
+            filled_pits_positions = (("filled_pits_positions", self._onehot(observation["filled_pits_positions"], depth=max(self.game.size)+1)),) if self._team_num > 1 else ()
+        else:
+            filled_pits_positions = (("filled_pits_positions", observation["filled_pits_positions"]),) if self._team_num > 1 else ()
+
         if self._wrap_turn:
             turn = (("player_turn", np.array([observation["player_turn"]], dtype=np.uint8)),) if self._team_size > 1 else ()
         else:
@@ -148,12 +161,13 @@ class OnehotObservation(gym.ObservationWrapper):
             *direction, 
             *has_orb, 
             *position, 
+            *filled_pits_positions, 
             *turn, 
         ])
 
 
 if __name__ == "__main__":
-    env = PitsAndOrbsEnv(size=7, player_num=2, team_num=1, return_board_type="positions")
+    env = PitsAndOrbsEnv(size=7, player_num=2, team_num=2)
     env = OnehotObservation(env, obs_keys=["all"])
 
     print()
@@ -168,7 +182,7 @@ if __name__ == "__main__":
 
     for _ in range(10):
         action = env.action_space.sample()
-        # action = int(input("Current Action: "))
+        # action = int(input(f"Current Action for Team# {env.game.team_turn}: "))
         obs, reward, done, info = env.step(action)
 
         print("Action:", action)
