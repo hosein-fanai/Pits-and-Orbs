@@ -22,7 +22,7 @@ class PitsAndOrbs:
     OBSERVATIONS = ["partial obs", "full state", "neighbors"]
     BOARDS = ["array", "positions"]
 
-    TEAM_COLORS = [(0, 0, 255), (122, 0, 255)]
+    TEAM_COLORS = [(0, 0, 255), (127, 0, 255)]
 
     FPS = 60
 
@@ -102,59 +102,74 @@ class PitsAndOrbs:
         return action
 
     def _update_screen(self):
-        self.screen.fill((200, 200, 200))
-
-        self._display_objects()
-
-        self._draw_table()
-
-        if self._pygame_with_help:
-            self._draw_info_and_help()
-
-        if self.printed_game_is_finished:         
-            self.screen.blit(self.finished_text, self.finished_text_rect)
+        self._render_on_surface(self.screen)
 
         pygame.display.flip()
 
-    def _display_objects(self): # TODO: highlight neighbor cells + mark filled pits with their corresponding team color + create seperate windows for each team
+    def _render_on_surface(self, surface):
+        surface.fill((200, 200, 200))
+
+        self._display_objects(surface)
+
+        self._draw_table(surface)
+
+        if self._pygame_with_help:
+            self._draw_info_and_help(surface)
+
+        if self.printed_game_is_finished:         
+            surface.blit(self.finished_text, self.finished_text_rect)
+
+    def _display_objects(self, surface): # TODO: highlight neighbor cells + mark filled pits with their corresponding team color
         if self._return_obs_type in ("partial obs", "neighbors"):
-            boards = [team.get_memory() for team in self.teams]
+            board = self.current_team.get_memory()
         elif self._return_obs_type == "full state":
-            boards = [self.board_state for _ in self.teams]
+                board = self.board_state
 
-        for team_index, (board, team , team_color) in enumerate(zip(boards, self.teams, PitsAndOrbs.TEAM_COLORS)):
-            for player_index, (player_pos_i, player_pos_j) in enumerate(team.players_pos):
-                self._draw_player(player_pos_i, player_pos_j, team_index, player_index, team_color)
+        team_index = self.teams.index(self.current_team)
+        for player_index, (player_pos_i, player_pos_j) in enumerate(self.current_team.players_pos):
+            self._draw_player(surface, player_pos_i, player_pos_j, team_index, player_index)
 
-            for i in range(self.size[0]):
-                for j in range(self.size[1]):
-                    cell_type = board[i, j]
-                    if cell_type == 0:
-                        continue
-                    elif cell_type == 1:
-                        pass
-                    elif cell_type == 2:
-                        self._draw_orb(i, j)
-                    elif cell_type == 3:
-                        self._draw_pit(i, j)
-                    elif cell_type == 4:
-                        self._draw_orb(i,j)
-                    elif cell_type == 5:
-                        self._draw_pit(i,j)
-                    elif cell_type == 6:
-                        self._draw_pit(i, j)
-                        self._draw_orb(i, j, half_size=True, center=True)
-                    elif cell_type == 7:
-                        self._draw_pit(i, j)
-                        self._draw_orb(i, j, half_size=True, center=True)
+        if self.team_num > 1:
+            opponent_team_index = (team_index + 1) % self.team_num # TODO: Change it if there are more than two team colors
+            for opponent_player_cell in (1, 4, 5, 7):
+                pos_Is, pos_Js = np.where(board==opponent_player_cell)
+                if len(pos_Is) < 1:
+                    continue
 
-        for team_index, team in enumerate(self.teams):
-            for player_index, (player_pos_i, player_pos_j) in enumerate(team.players_pos):
-                self._draw_player_direction(player_pos_i, player_pos_j, team_index, player_index)
+                for player_pos_i, player_pos_j in zip(pos_Is, pos_Js):
+                    if (player_pos_i, player_pos_j) not in self.current_team.players_pos:
+                        self._draw_player(surface, player_pos_i, player_pos_j, opponent_team_index, is_help=True)
 
-    def _draw_player(self, i, j, team_index, player_index, player_color, is_help=False):
+        for i in range(self.size[0]):
+            for j in range(self.size[1]):
+                cell_type = board[i, j]
+                if cell_type == 0:
+                    continue
+                elif cell_type == 1:
+                    pass
+                elif cell_type == 2:
+                    self._draw_orb(surface, i, j)
+                elif cell_type == 3:
+                    self._draw_pit(surface, i, j)
+                elif cell_type == 4:
+                    self._draw_orb(surface, i, j)
+                elif cell_type == 5:
+                    self._draw_pit(surface, i, j)
+                elif cell_type == 6:
+                    self._draw_pit(surface, i, j)
+                    self._draw_orb(surface, i, j, half_size=True, center=True)
+                elif cell_type == 7:
+                    self._draw_pit(surface, i, j)
+                    self._draw_orb(surface, i, j, half_size=True, center=True)
+
+        for player_index, (player_pos_i, player_pos_j) in enumerate(self.current_team.players_pos):
+            self._draw_player_direction(surface, player_pos_i, player_pos_j, team_index, player_index)
+
+    def _draw_player(self, surface, i, j, team_index, player_index=None, is_help=False):
+        player_color = PitsAndOrbs.TEAM_COLORS[team_index]
+
         rect = pygame.draw.rect(
-            self.screen, 
+            surface, 
             player_color, 
             (j*self.multiplier+self.border_width, 
             i*self.multiplier+self.border_width, 
@@ -165,14 +180,14 @@ class PitsAndOrbs:
             player_index_text = self.smaller_font.render(str(player_index), True, (0, 0, 0), (200, 200, 200))
             player_index_rect = player_index_text.get_rect()
             player_index_rect.topright = rect.topright
-            self.screen.blit(player_index_text, player_index_rect)
+            surface.blit(player_index_text, player_index_rect)
 
-        if self.teams[team_index].players[player_index].has_orb and not is_help:
-            self._draw_orb(i, j, half_size=True)
+            if self.teams[team_index].players[player_index].has_orb:
+                self._draw_orb(surface, i, j, half_size=True)
 
         return rect
 
-    def _draw_player_direction(self, i, j, team_index, player_index):
+    def _draw_player_direction(self, surface, i, j, team_index, player_index):
         match self.teams[team_index].players[player_index].direction:
             case 0:
                 points = [
@@ -200,14 +215,14 @@ class PitsAndOrbs:
                 ]
 
         rect = pygame.draw.polygon(
-            self.screen, 
+            surface, 
             (255, 0, 255), 
             points, 
         )
 
         return rect
 
-    def _draw_orb(self, i, j, half_size=False, center=False):
+    def _draw_orb(self, surface, i, j, half_size=False, center=False):
         if half_size:
             divisor = 2
             color = (255, 255, 0)
@@ -223,7 +238,7 @@ class PitsAndOrbs:
             push_y = self.border_margin // (2 * divisor)
 
         rect = pygame.draw.ellipse(
-            self.screen, 
+            surface, 
             color, 
             (j*self.multiplier+self.border_width+2+push_x, 
             i*self.multiplier+self.border_width+2+push_y, 
@@ -232,9 +247,9 @@ class PitsAndOrbs:
 
         return rect
 
-    def _draw_pit(self, i, j):
+    def _draw_pit(self, surface, i, j):
         rect = pygame.draw.ellipse(
-            self.screen, 
+            surface, 
             (255, 0, 0), 
             (j*self.multiplier+self.border_width+2, 
             i*self.multiplier+self.border_width+10, 
@@ -243,21 +258,21 @@ class PitsAndOrbs:
 
         return rect
 
-    def _draw_table(self):
+    def _draw_table(self, surface):
         for i in range(self.size[0]+1):
-            pygame.draw.line(self.screen, self.border_color, 
+            pygame.draw.line(surface, self.border_color, 
                             (0, i*self.multiplier), 
-                            (self.screen_dims[0], i*self.multiplier), 
+                            (self.surface_dims[0], i*self.multiplier), 
                             width=self.border_width)
 
         for j in range(self.size[1]+1):
             margin = -1 if j == self.size[1] else 0
-            pygame.draw.line(self.screen, self.border_color, 
+            pygame.draw.line(surface, self.border_color, 
                             (j*self.multiplier+margin, 0), 
-                            (j*self.multiplier+margin, self.screen_dims[0]), 
+                            (j*self.multiplier+margin, self.surface_dims[0]), 
                             width=self.border_width)
 
-    def _draw_info_and_help(self): 
+    def _draw_info_and_help(self, surface): 
         for i, team in enumerate(self.teams):
             for j, player in enumerate(team.players):
                 player_turn_text = ""
@@ -269,7 +284,7 @@ class PitsAndOrbs:
                                     player_turn_text.upper(), True, (0, 0, 0), (200, 200, 200))
                 player_movement_rect = player_movement_txt.get_rect()
                 player_movement_rect.topleft = (0, self.size[0]*self.multiplier+self.border_width+10+15*(i*2+j))
-                self.screen.blit(player_movement_txt, player_movement_rect)
+                surface.blit(player_movement_txt, player_movement_rect)
 
         help_txt = self.smaller_font.render(
             f"{'    |    '.join([str(i)+' ==> '+action.split('.')[-1].upper() for i, action in enumerate(PitsAndOrbs.ACTIONS[:-1])])}", 
@@ -280,7 +295,7 @@ class PitsAndOrbs:
         help_rect = help_txt.get_rect()
         help_rect.topleft = (player_movement_rect.bottomleft[0]+self.border_width, 
                             player_movement_rect.bottomleft[1]+self.multiplier/10)
-        self.screen.blit(help_txt, help_rect)
+        surface.blit(help_txt, help_rect)
         
         if self.team_num > 1:
             help_txt_last = self.smaller_font.render(
@@ -292,50 +307,50 @@ class PitsAndOrbs:
             help_rect_last = help_txt_last.get_rect()
             help_rect_last.topleft = (help_rect.bottomleft[0], 
                                     help_rect.bottomleft[1]+self.multiplier/30)
-            self.screen.blit(help_txt_last, help_rect_last)
+            surface.blit(help_txt_last, help_rect_last)
 
         for i, cell_type in enumerate(PitsAndOrbs.CELLS):
             type_ = cell_type.split('.')[-1]
             if i == 0:
                 continue
             elif i == 1:
-                obj_rect = self._draw_player(self.size[0]+1, 0, 0, 0, PitsAndOrbs.TEAM_COLORS[0], is_help=True)
+                obj_rect = self._draw_player(surface, self.size[0]+1, 0, 0, 0, is_help=True)
             elif i == 2:
-                obj_rect = self._draw_orb(self.size[0]+1, 1)
+                obj_rect = self._draw_orb(surface, self.size[0]+1, 1)
             elif i == 3:
-                obj_rect = self._draw_pit(self.size[0]+1, 2)
+                obj_rect = self._draw_pit(surface, self.size[0]+1, 2)
             elif i == 4:
-                obj_rect = self._draw_player(self.size[0]+1, 3, 0, 0, PitsAndOrbs.TEAM_COLORS[0], is_help=True)
-                self._draw_orb(self.size[0]+1, 3)
+                obj_rect = self._draw_player(surface, self.size[0]+1, 3, 0, 0, is_help=True)
+                self._draw_orb(surface, self.size[0]+1, 3)
             elif i == 5:
-                obj_rect = self._draw_player(self.size[0]+1, 4, 0, 0, PitsAndOrbs.TEAM_COLORS[0], is_help=True)
-                self._draw_pit(self.size[0]+1, 4)
+                obj_rect = self._draw_player(surface, self.size[0]+1, 4, 0, 0, is_help=True)
+                self._draw_pit(surface, self.size[0]+1, 4)
             elif i == 6:
-                obj_rect = self._draw_pit(self.size[0]+2, 0)
-                self._draw_orb(self.size[0]+2, 0, half_size=True, center=True)
+                obj_rect = self._draw_pit(surface, self.size[0]+2, 0)
+                self._draw_orb(surface, self.size[0]+2, 0, half_size=True, center=True)
             elif i == 7:
-                obj_rect = self._draw_player(self.size[0]+2, 1, 0, 0, PitsAndOrbs.TEAM_COLORS[0], is_help=True)
-                self._draw_pit(self.size[0]+2, 1)
-                self._draw_orb(self.size[0]+2, 1, half_size=True, center=True)
+                obj_rect = self._draw_player(surface, self.size[0]+2, 1, 0, 0, is_help=True)
+                self._draw_pit(surface, self.size[0]+2, 1)
+                self._draw_orb(surface, self.size[0]+2, 1, half_size=True, center=True)
 
             team_text = "team0 " if type_ == "player" else ""
-            self._write_text(team_text+type_, obj_rect)
+            self._write_text(surface, team_text+type_, obj_rect)
 
         if self.team_num > 1:
-            obj_rect = self._draw_player(self.size[0]+2, 2, 0, 0, PitsAndOrbs.TEAM_COLORS[1], is_help=True)
-            self._write_text("team1 "+"player", obj_rect)
+            obj_rect = self._draw_player(surface, self.size[0]+2, 2, 1, 0, is_help=True)
+            self._write_text(surface, "team1 "+"player", obj_rect)
 
-    def _write_text(self, text, obj_rect):
+    def _write_text(self, surface, text, obj_rect):
         text = self.smaller_font.render(text, True, (0, 0, 0))
         text_rect = text.get_rect()
         text_rect.center = obj_rect.center
 
-        self.screen.blit(text, text_rect)
+        surface.blit(text, text_rect)
 
-    def _build_finish_materials(self):
+    def _build_finish_materials(self, surface):
         text = pygame.font.SysFont(None, int(0.85*self.multiplier)).render("Round Finished!", True, (0, 0, 0))
         text_rect = text.get_rect()
-        text_rect.center = self.screen.get_rect().center
+        text_rect.center = surface.get_rect().center
 
         text.set_alpha(175)
 
@@ -434,11 +449,11 @@ class PitsAndOrbs:
             case "tried to throw orb away in cell types other than 7":
                 reward = -0.1
             case "the player has depleted its movements":
-                reward = -0.1
+                reward = 0. # -0.1
             case "episode is done successfully":
-                reward = 1.
+                reward = 0. # 1.
             case "episode is done unsuccessfully":
-                reward = -1.
+                reward = 0. # -1.
             case "episode is not done":
                 reward = 0.
             case _:
@@ -545,7 +560,7 @@ class PitsAndOrbs:
                 self.current_player.add_orb(
                     orb_index=self._orbs_pos.index((player_pos_i, player_pos_j)))
             except ValueError:
-                self._write_status_to_file()
+                # self._write_history_to_file()
                 raise
 
             self._add_to_current_reward(flag="tried to pick orb up in cell type 4")
@@ -671,13 +686,29 @@ class PitsAndOrbs:
             case 6:
                 self.board_state[orb_pos] = prev_cell
 
-    def _write_status_to_file(self):
+    def _write_history_to_file(self):
         if not os.path.exists("./debug"):
             os.makedirs("./debug")
 
         np.savetxt("./debug/board.txt", self.board_state, delimiter=",")
 
         np.savetxt("./debug/memory.txt", self.current_team.get_memory(), delimiter=",")
+
+        with open("./debug/hist_actions.txt", "w") as file:
+            for action in self._hist_actions:
+                file.write(str(action) + "\n")
+
+        for i, board in enumerate(self._hist_board):
+            np.savetxt(f"./debug/hist_board_{i}.txt", board, delimiter=",")
+
+        for i, memory in enumerate(self._hist_memory):
+            np.savetxt(f"./debug/hist_memory_{i}.txt", memory, delimiter=",")
+
+        with open("./debug/hist_orbs_pos.txt", "w") as file:
+            for orbs_pos in self._hist_orbs_pos:
+                for orb_pos in orbs_pos:
+                    file.write(str(orb_pos) + "\t")
+                file.write("\n")
 
         with open("./debug/orbs_pos.txt", "w") as file:
             for orb_pos in self._orbs_pos:
@@ -737,7 +768,7 @@ class PitsAndOrbs:
             **{f"team{i}_player{j}_movements#": self.teams[i].players[j].movements for i in range(self.team_num) for j in range(self.team_size)},
         }
 
-    def _convert_array_to_positions(self, array=None):
+    def _convert_array_to_positions(self, array=None): # TODO: return poses for neighbors too
         if self._return_obs_type == "partial obs":
             assert array is not None
 
@@ -793,9 +824,13 @@ class PitsAndOrbs:
         return self.current_team.current_player
 
     def step_game(self, action):
+        # self._hist_actions.append(action)
+        # self._hist_board.append(self.board_state.copy())
+        # self._hist_orbs_pos.append(self._orbs_pos.copy())
         self._do_action(action)
 
-        board = self._get_observation()
+        observation = self._get_observation()
+        # self._hist_memory.append(observation.copy())
         reward = self._current_reward
         done = self._is_done()
         info = self._get_info()
@@ -805,9 +840,15 @@ class PitsAndOrbs:
         # reset current step's rewards
         self._current_reward = 0.
 
-        return board, reward, done, info
+        return observation, reward, done, info
 
     def reset_game(self, seed=None):
+        # define histories
+        self._hist_actions = []
+        self._hist_board = []
+        self._hist_memory = []
+        self._hist_orbs_pos = []
+
         # initiate necessary variables
         self.printed_game_is_finished = False
         self._current_reward = 0.
@@ -835,12 +876,11 @@ class PitsAndOrbs:
         self.board_state = self.board_state.reshape(self.size)
 
         # save orbs and pits positions and their orders
-        if self._return_board_type == "positions":
-            orb_pos_Is, orb_pos_Js = np.where(self.board_state==2)
-            self._orbs_pos = list(zip(orb_pos_Is, orb_pos_Js))
+        orb_pos_Is, orb_pos_Js = np.where(self.board_state==2)
+        self._orbs_pos = list(zip(orb_pos_Is, orb_pos_Js))
 
-            pit_pos_Is, pit_pos_Js = np.where(self.board_state==3)
-            self._pits_pos = list(zip(pit_pos_Is, pit_pos_Js))
+        pit_pos_Is, pit_pos_Js = np.where(self.board_state==3)
+        self._pits_pos = list(zip(pit_pos_Is, pit_pos_Js))
 
         # initiate multiple teams with multiple players
         self.team_turn = 0
@@ -870,8 +910,7 @@ class PitsAndOrbs:
             )
             self.screen = pygame.display.set_mode(size=self.screen_size, 
                                                 flags=pygame.RESIZABLE)
-            self.screen_rect = self.screen.get_rect()
-            self.screen_dims = self.screen_rect.size
+            self.surface_dims = self.screen.get_rect().size
 
             self.clock = pygame.time.Clock()
             self.font = pygame.font.SysFont(None, int(0.5*self.multiplier))
@@ -918,26 +957,48 @@ class PitsAndOrbs:
     def get_frame(self):
         assert self._pygame_mode
 
-        frame = np.transpose(pygame.surfarray.array3d(self.screen), (1, 0, 2))
+        if self.team_num > 1 and (self._return_obs_type == "partial obs" or \
+                                self._return_obs_type == "neighbors"):
+            current_team_index = self.teams.index(self.current_team)
+            frames = []
+            for i in range(self.team_num):
+                team_screen = pygame.Surface(self.screen.get_size())
 
-        return frame
+                self.team_turn = i
+                self._render_on_surface(team_screen)
+
+                team_frame = np.transpose(pygame.surfarray.array3d(team_screen), (1, 0, 2))
+                frames.append(team_frame)
+
+            combined_frame = []
+            for t_frame in frames:
+                combined_frame.append(t_frame)
+                combined_frame.append(np.zeros((self.surface_dims[1], 10, 3), dtype=np.uint8))
+            combined_frame = np.concatenate(combined_frame[:-1], axis=1)
+
+            self.team_turn = current_team_index
+        else:
+            frame = np.transpose(pygame.surfarray.array3d(self.screen), (1, 0, 2))
+            combined_frame = frame
+
+        return combined_frame
 
     @staticmethod
     def clear_screen():
         os.system("cls" if os.name=="nt" else "clear")
 
-    def play1(self, show_help=True, clear=True): # input=4 quits the game
+    def play1(self, show_help=True, clear=True): # input=5 quits the game
         rewards = 0.
 
         while True:
             self.render_game(show_help=show_help, clear=clear)
 
             action = int(input("Next Action: "))
-            if action == 4:
+            if action == 5:
                 print("Quiting the game ...")
                 break
 
-            _, reward, done, _ = self.step_game(action)
+            _, reward, done, info = self.step_game(action)
             rewards += reward
 
             print("Taken reward for last action:", reward)
@@ -976,7 +1037,7 @@ class PitsAndOrbs:
                     if done and not self.printed_game_is_finished:
                         print(f"Game ended successfully.")
                         print("Final info:", info)
-                        self._build_finish_materials()
+                        self._build_finish_materials(self.screen)
                         self.printed_game_is_finished = True
 
             self.clock.tick(PitsAndOrbs.FPS)
