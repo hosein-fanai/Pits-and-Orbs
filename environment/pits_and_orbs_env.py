@@ -115,11 +115,14 @@ class PitsAndOrbsEnv(gym.Env):
             return observation, reward, done, info
 
         # this is for when the player doesn't have any moves to play, but others may have or have not
-        observation = self._get_obs(obs=self.game._get_observation())
-        reward = self.game._reward_function(flag="the player has depleted its movements") + \
-            self._get_final_step_reward(done)
+        raw_obs = self.game._get_observation()
+        observation = self._get_obs(raw_obs)
+        reward = 0.
         done = self._all_players_used_max_moves() 
         info = self.game._get_info()
+
+        reward += self.game._reward_function(flag="the player has depleted its movements")
+        reward += self._get_final_step_reward(done)
 
         self.game._change_team_and_player_turn()
 
