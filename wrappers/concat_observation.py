@@ -47,7 +47,9 @@ class ConcatObservation(gym.ObservationWrapper):
 
         self._pos_condition = (self._team_size > 1) or (self._team_num > 1) or self._position_board
         position_size = 2 if self._pos_condition else 0
-        position_size = position_size*max(self.game.size) if len(env.observation_space.get("player0_position", np.zeros((1,))).shape) > 1 else position_size
+        position_size = position_size*max(self.game.size) if \
+                        len(env.observation_space.get("player0_position", np.zeros((1,))).shape) > 1 \
+                        else position_size
 
         filled_pits_positions_size = 1 if self._team_num > 1 else 0
         for dim in env.observation_space.get("filled_pits_positions", np.zeros((1,))).shape:
@@ -137,7 +139,15 @@ class ConcatObservation(gym.ObservationWrapper):
         else:
             player_turn = []
 
-        return np.concatenate([board, *player_movements, *player_direction, *player_has_orb, *player_position, *filled_pits_positions, *player_turn], axis=0)
+        return np.concatenate([
+            board, 
+            *player_movements, 
+            *player_direction, 
+            *player_has_orb, 
+            *player_position, 
+            *filled_pits_positions, 
+            *player_turn
+        ], axis=0)
 
 
 if __name__ == "__main__":

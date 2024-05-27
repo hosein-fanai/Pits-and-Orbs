@@ -30,8 +30,8 @@ class NormalizeObservation(gym.ObservationWrapper):
         self._position_board = (self.game._return_board_type == self.game.BOARDS[1])
 
         self._wrap_board, self._wrap_movements, self._wrap_direction, \
-            self._wrap_has_orb, self._wrap_position, self._wrap_filled_pits_positions, \
-            self._wrap_turn = (False,) * 7
+        self._wrap_has_orb, self._wrap_position, self._wrap_filled_pits_positions, \
+        self._wrap_turn = (False,) * 7
 
         if "board" in self._obs_keys or "all" in self._obs_keys:
             self._wrap_board = True
