@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 try:
     from game.pits_and_orbs import PitsAndOrbs
-except:
+except ModuleNotFoundError:
     import sys
     import os
 

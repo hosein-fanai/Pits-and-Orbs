@@ -1,7 +1,7 @@
 try:
     import tensorflow as tf
     from tensorflow.keras import models, layers, optimizers, losses, utils
-except:
+except ModuleNotFoundError:
     print("Please install tensorflow by: pip install tensorflow==2.10")
     raise
 

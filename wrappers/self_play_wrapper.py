@@ -18,7 +18,10 @@ except:
 class SelfPlayWrapper(gym.Wrapper):
 
     def __init__(self, env: PitsAndOrbsEnv):
-        assert env.game.team_num > 1
+        try:
+            assert env.game.team_num > 1
+        except AttributeError: # it's a vectorized env made by sb3
+            assert env.get_attr(attr_name="game", indices=0)[0].team_num > 1
 
         super().__init__(env)
 

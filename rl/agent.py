@@ -12,6 +12,8 @@ import random
 
 from utils import make_env
 
+from wrappers.self_play_wrapper import SelfPlayWrapper
+
 
 class Agent:
 
@@ -79,6 +81,13 @@ class Agent:
 
     def train_with_self_play(self, env, first_copy_model, models_bank_maxlen=5, self_play_epochs=20, 
                             iterations=5_000_000, log_interval=1_000):
+        if not isinstance(env, SelfPlayWrapper):
+            try: # if the env is a sb3-based env
+                if not env.env_is_wrapped(wrapper_class=SelfPlayWrapper, indices=0)[0]:
+                    env = SelfPlayWrapper(env)
+            except AttributeError: # if the env is not a sb3-based env
+                env = SelfPlayWrapper(env)
+
         models_bank = deque(maxlen=models_bank_maxlen)
         models_bank.append(first_copy_model)
 
@@ -87,8 +96,12 @@ class Agent:
 
             opponent_model_idx = random.randint(0, len(models_bank)-1)
             opponent_model = models_bank[opponent_model_idx]
-            env.env_method("set_opponent_model", model=opponent_model)
 
+            try:
+                env.set_opponent_model(model=opponent_model)
+            except AttributeError:
+                env.env_method(method_name="set_opponent_model", model=opponent_model)
+    
             self.model.learn(total_timesteps=iterations, log_interval=log_interval, reset_num_timesteps=False)
             models_bank.append(self.model)
 
@@ -215,7 +228,7 @@ class Agent:
         if model_path.endswith(".zip"):
             try:
                 from stable_baselines3 import A2C, PPO
-            except:
+            except ModuleNotFoundError:
                 print("Please install Stable-Baselines3 by: pip install stable-baselines3==1.8.0")
                 return None
 
@@ -276,7 +289,7 @@ class Agent:
             try:
                 from stable_baselines3.common.env_util import make_vec_env
                 from stable_baselines3 import A2C
-            except:
+            except ModuleNotFoundError:
                 print("Please install Stable-Baselines3 by: pip install stable-baselines3==1.8.0")
                 return None
 
@@ -304,6 +317,9 @@ class Agent:
         self.load_model(model_path=model_path, algorithm=configs["algorithm"])
 
         env = make_env(**configs["kwargs"]["make_env"])
+        if self_play_wrapper:=configs["kwargs"]["make_env"].get("self_play_wrapper", None) is not None:
+            if self_play_wrapper:
+                env.set_opponent_model(self.model)
 
         _, frames = self._run_agent_one_episode(env, **configs["params"])
 

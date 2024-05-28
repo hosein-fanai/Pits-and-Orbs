@@ -3,7 +3,7 @@ import numpy as np
 try:
     from game.player import Player
     from game.memory import Memory
-except:
+except ModuleNotFoundError:
     from player import Player
     from memory import Memory
 
