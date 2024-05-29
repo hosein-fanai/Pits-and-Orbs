@@ -14,5 +14,6 @@ configs/test/
 
 models/*/test.zip
 models/*/test.h5
+models/self-play
 
 gifs/test.gif

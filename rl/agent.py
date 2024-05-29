@@ -28,10 +28,10 @@ class Agent:
         if model:
             self.model = model
 
-    def _run_rules_one_step(self, obs):
+    def run_rules_one_step(self, obs):
         return None
 
-    def _run_agent_one_episode(self, env, max_steps=500, fps=None, 
+    def run_agent_one_episode(self, env, max_steps=500, fps=None, 
                 deterministic_action_choice=False, 
                 print_rewards=True, return_frames=True):
         assert return_frames and env.game._pygame_mode
@@ -79,8 +79,9 @@ class Agent:
 
         return rewards, frames
 
-    def train_with_self_play(self, env, first_copy_model, models_bank_maxlen=5, self_play_epochs=20, 
-                            iterations=5_000_000, log_interval=1_000):
+    def train_with_self_play(self, env, clone_model, models_bank_maxlen=5, self_play_epochs=20, 
+                            iterations=5_000_000, log_interval=1_000, models_bank_path="./models/self-play", 
+                            algorithm="A2C"):
         if not isinstance(env, SelfPlayWrapper):
             try: # if the env is a sb3-based env
                 if not env.env_is_wrapped(wrapper_class=SelfPlayWrapper, indices=0)[0]:
@@ -88,22 +89,47 @@ class Agent:
             except AttributeError: # if the env is not a sb3-based env
                 env = SelfPlayWrapper(env)
 
-        models_bank = deque(maxlen=models_bank_maxlen)
-        models_bank.append(first_copy_model)
+        if not os.path.exists(models_bank_path):
+            os.makedirs(models_bank_path)
+            print("Created the directory:", models_bank_path)
+        else:
+            for item in os.listdir(models_bank_path):
+                item_path = os.path.join(models_bank_path, item)
+                os.remove(item_path)
 
-        for epoch in range(self_play_epochs):
-            print(f"\rWorking on epoch: #{epoch+1}", end='')
+            print("Cleared all the files in the directory:", models_bank_path)
+
+        print()
+
+        template_model_name = "pao_model"
+
+        clone_model_path = os.path.join(models_bank_path, template_model_name+str(0))
+        clone_model.save(clone_model_path)
+
+        models_bank = deque(maxlen=models_bank_maxlen)
+        models_bank.append(clone_model_path)
+
+        for epoch in range(1, self_play_epochs+1):
+            print(f"\rWorking on epoch: #{epoch}", end='')
 
             opponent_model_idx = random.randint(0, len(models_bank)-1)
-            opponent_model = models_bank[opponent_model_idx]
+            opponent_model_path = models_bank[opponent_model_idx]
+            opponent_model = self.load_model(opponent_model_path, 
+                                            algorithm=algorithm, 
+                                            force=True, dont_save=True)
 
             try:
                 env.set_opponent_model(model=opponent_model)
             except AttributeError:
                 env.env_method(method_name="set_opponent_model", model=opponent_model)
-    
-            self.model.learn(total_timesteps=iterations, log_interval=log_interval, reset_num_timesteps=False)
-            models_bank.append(self.model)
+
+            self.model.learn(total_timesteps=iterations, 
+                            log_interval=log_interval, 
+                            reset_num_timesteps=False)
+
+            model_epoch_path = os.path.join(models_bank_path, template_model_name+str(epoch))
+            self.model.save(model_epoch_path)
+            models_bank.append(model_epoch_path)
 
     @staticmethod
     def create_gif(frames, file_path):
@@ -217,38 +243,42 @@ class Agent:
         
         return {"algorithm": algorithm, "params": params, "kwargs": kwargs}
 
-    def load_model(self, model_path, algorithm, force=False):
-        if self.model is not None:
-            print("Warning! Object already has a loaded model.")
-            if not force:
-                print("Load failed due to not forcing the load. Continuing to use the previous loaded model.")
+    def load_model(self, model_path, algorithm, force=False, dont_save=False):
+        if self.model is not None and not force:
+            print("Load failed due to not forcing the load. Continuing to use the previous loaded model.")
+            return None
 
-                return
-
-        if model_path.endswith(".zip"):
+        if algorithm == "A2C":
             try:
-                from stable_baselines3 import A2C, PPO
+                from stable_baselines3 import A2C
+
+
+                model = A2C.load(model_path)
             except ModuleNotFoundError:
-                print("Please install Stable-Baselines3 by: pip install stable-baselines3==1.8.0")
-                return None
+                    print("Please install Stable-Baselines3 by: pip install stable-baselines3==1.8.0")
+                    return None
+        elif algorithm == "PPO":
+            try:
+                from stable_baselines3 import PPO
 
-
-            if algorithm == "A2C":
-                self.model = A2C.load(model_path)
-            elif algorithm == "PPO":
-                self.model = PPO.load(model_path)
-
-        elif model_path.endswith(".h5") \
-            or model_path.endswith(".keras") \
-            or model_path.endswith("/"):
+                
+                model = PPO.load(model_path)
+            except ModuleNotFoundError:
+                    print("Please install Stable-Baselines3 by: pip install stable-baselines3==1.8.0")
+                    return None            
+        elif algorithm == "DQN":
             from rl.dqn import DQN
 
 
-            if algorithm == "DQN":
-                self.model = DQN()
-                self.load_model(model_path)
-            else:
-                raise Exception("Wrong algorithm for a tensorflow/keras model.")
+            model = DQN()
+            model.load(model_path)
+
+        if dont_save:
+            return model
+        else:
+            self.set_model(model)
+
+            return model
 
     def drop_model(self):
         self.model = None
@@ -266,7 +296,7 @@ class Agent:
             return action
         else:
             if use_rules:
-                return self._run_rules_one_step(obs)
+                return self.run_rules_one_step(obs)
             else:
                 print("No model has been loaded, and the use_rules arg was set to false.")
 
@@ -321,7 +351,7 @@ class Agent:
             if self_play_wrapper:
                 env.set_opponent_model(self.model)
 
-        _, frames = self._run_agent_one_episode(env, **configs["params"])
+        _, frames = self.run_agent_one_episode(env, **configs["params"])
 
         env.close()
 
