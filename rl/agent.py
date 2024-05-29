@@ -240,7 +240,7 @@ class Agent:
         del configs["gif_file_name"]
 
         params = {**configs}
-        
+
         return {"algorithm": algorithm, "params": params, "kwargs": kwargs}
 
     def load_model(self, model_path, algorithm, force=False, dont_save=False):
@@ -343,7 +343,12 @@ class Agent:
     def run(self, config_file_path):
         configs = Agent.load_run_configs(config_file_path)
 
-        model_path = os.path.join("./models", configs["algorithm"], configs["kwargs"]["model_file_name"])
+        model_file_name = configs["kwargs"]["model_file_name"]
+        if os.path.isfile(model_file_name):
+            model_path = model_file_name
+        else:
+            model_path = os.path.join("./models", configs["algorithm"], model_file_name)
+
         self.load_model(model_path=model_path, algorithm=configs["algorithm"])
 
         env = make_env(**configs["kwargs"]["make_env"])
