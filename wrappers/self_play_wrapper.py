@@ -17,11 +17,11 @@ except:
 
 class SelfPlayWrapper(gym.Wrapper):
 
-    def __init__(self, env: PitsAndOrbsEnv):
+    def __init__(self, env: PitsAndOrbsEnv): # only supports two teams
         try:
-            assert env.game.team_num > 1
+            assert env.game.team_num == 2
         except AttributeError: # it's a vectorized env made by sb3
-            assert env.get_attr(attr_name="game", indices=0)[0].team_num > 1
+            assert env.get_attr(attr_name="game", indices=0)[0].team_num == 2
 
         super().__init__(env)
 
@@ -30,10 +30,22 @@ class SelfPlayWrapper(gym.Wrapper):
     def set_opponent_model(self, model: any) -> None:
         self._opponent_model = model
 
-    def step(self, action) -> tuple[np.ndarray, float, bool, dict]:
+    def reset(self): # , seed=None, options=None
+        obs = self.env.reset()
+
+        # TODO: the prev_observation should be taken from the other team
+        # team_turn = self.game.team_turn
+        # self.game.team_turn = (team_turn - 1) % self._team_num
+        self.prev_observation = obs
+        # self.game.team_turn = team_turn
+
+        return obs
+
+    def step(self, action: int | np.ndarray) -> tuple[np.ndarray, float, bool, dict]:
         observation, reward, done, info = self.env.step(action)
 
-        opponent_action, _ = self._opponent_model.predict(observation)
-        self.env.step(opponent_action)
+        opponent_action, _ = self._opponent_model.predict(self.prev_observation)
+        opponent_observation, *_ = self.env.step(opponent_action)
+        self.prev_observation = opponent_observation
 
         return observation, reward, done, info
