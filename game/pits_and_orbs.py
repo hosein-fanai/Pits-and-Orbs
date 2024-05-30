@@ -8,7 +8,7 @@ import os
 
 try:
     from game.team import Team
-except:
+except ModuleNotFoundError:
     from team import Team
 
 
@@ -395,7 +395,7 @@ class PitsAndOrbs:
             case "tried to throw another team's orb away in cell type 7":
                 reward = 1.
             case "tried to throw its team's orb away in cell type 7":
-                reward = 0.
+                reward = -1.
             case "tried to throw orb away in cell types other than 7":
                 reward = 0.
             case "the player has depleted its movements":
@@ -556,12 +556,9 @@ class PitsAndOrbs:
         player_pos_i, player_pos_j = self.current_player.position
         if self.board_state[player_pos_i, player_pos_j] == 4:
             self.board_state[player_pos_i, player_pos_j] = 1
-            try:
-                self.current_player.add_orb(
-                    orb_index=self._orbs_pos.index((player_pos_i, player_pos_j)))
-            except ValueError:
-                # self._write_history_to_file()
-                raise
+            # self.current_player.add_orb(
+            #     orb_index=self._orbs_pos.index((player_pos_i, player_pos_j)))
+            self.current_player.add_orb(0)
 
             self._add_to_current_reward(flag="tried to pick orb up in cell type 4")
         else:
@@ -590,7 +587,7 @@ class PitsAndOrbs:
                     = (player_pos_i, player_pos_j)
 
                 self.current_team.add_to_filled_pits((player_pos_i, player_pos_j))
-                self._move_orbs_randomly()
+                # self._move_orbs_randomly()
 
                 self._add_to_current_reward(flag="tried to put orb down on cell type 5")
             case 7:
@@ -598,6 +595,7 @@ class PitsAndOrbs:
 
     def _throw_orb_away(self):
         player_pos_i, player_pos_j = self.current_player.position
+
         if self.board_state[player_pos_i, player_pos_j] == 7:
             self.board_state[player_pos_i, player_pos_j] = 5
             self._throw_orb_randomly(orb_pos=(player_pos_i, player_pos_j))
@@ -606,16 +604,17 @@ class PitsAndOrbs:
                 if (player_pos_i, player_pos_j) in team.filled_pits:
                     team.rem_from_filled_pits((player_pos_i, player_pos_j))
 
-                    self._add_to_current_reward(flag="tried to throw another team's orb away in cell type 7")
+                    if team is self.current_team:
+                        self._add_to_current_reward(flag="tried to throw its team's orb away in cell type 7")
+                    elif team is not self.current_team:
+                        self._add_to_current_reward(flag="tried to throw another team's orb away in cell type 7")
+
                     break
-            else:
-                self._add_to_current_reward(flag="tried to throw its team's orb away in cell type 7")
-            
         else:
             self._add_to_current_reward(flag="tried to throw orb away in cell types other than 7")
 
     def _throw_orb_randomly(self, orb_pos):
-        orb_index = self._orbs_pos.index(orb_pos)
+        # orb_index = self._orbs_pos.index(orb_pos)
 
         valid_new_orb_poses = np.where(self.board_state == 0) # only empty cells are valid for orbs to be thrown to
         if len(valid_new_orb_poses) > 0:
@@ -625,9 +624,9 @@ class PitsAndOrbs:
             new_orb_pos = valid_new_orb_poses[new_orb_pos_index]
 
             self.board_state[new_orb_pos] = 2
-            self._orbs_pos[orb_index] = new_orb_pos
+            # self._orbs_pos[orb_index] = new_orb_pos
         else:
-            pass # there are no empty cells left
+            raise # there are no empty cells left
 
     def _move_orbs_randomly(self):
         for orb_cell in (2, 4):
@@ -636,14 +635,14 @@ class PitsAndOrbs:
                 continue
 
             for orb_pos in zip(orb_pos_Is, orb_pos_Js):
-                if np.random.rand() > 0.1: # don't move this orb
+                if np.random.rand() >= 0.1: # don't move this orb
                     continue
                 else: # randomly move this orb
                     direction = np.random.randint(len(PitsAndOrbs.DIRECTIONS))
                     self._move_orb_forward(orb_pos, direction)
 
     def _move_orb_forward(self, orb_pos, direction):
-        orb_index = self._orbs_pos.index(orb_pos)
+        # orb_index = self._orbs_pos.index(orb_pos)
         orb_pos_i, orb_pos_j = orb_pos
 
         match self.board_state[orb_pos_i, orb_pos_j]:
@@ -669,53 +668,22 @@ class PitsAndOrbs:
         match self.board_state[orb_pos_i, orb_pos_j]:
             case 0:
                 self.board_state[orb_pos_i, orb_pos_j] = 2
-                self._orbs_pos[orb_index] = (orb_pos_i, orb_pos_j)
+                # self._orbs_pos[orb_index] = (orb_pos_i, orb_pos_j)
             case 1:
                 self.board_state[orb_pos_i, orb_pos_j] = 4
-                self._orbs_pos[orb_index] = (orb_pos_i, orb_pos_j)
+                # self._orbs_pos[orb_index] = (orb_pos_i, orb_pos_j)
             case 2:
                 self.board_state[orb_pos] = prev_cell
             case 3:
                 self.board_state[orb_pos_i, orb_pos_j] = 6
-                self._orbs_pos[orb_index] = (orb_pos_i, orb_pos_j)
+                # self._orbs_pos[orb_index] = (orb_pos_i, orb_pos_j)
             case 4:
                 self.board_state[orb_pos] = prev_cell
             case 5:
                 self.board_state[orb_pos_i, orb_pos_j] = 7
-                self._orbs_pos[orb_index] = (orb_pos_i, orb_pos_j)
+                # self._orbs_pos[orb_index] = (orb_pos_i, orb_pos_j)
             case 6:
                 self.board_state[orb_pos] = prev_cell
-
-    def _write_history_to_file(self):
-        if not os.path.exists("./debug"):
-            os.makedirs("./debug")
-
-        np.savetxt("./debug/board.txt", self.board_state, delimiter=",")
-
-        np.savetxt("./debug/memory.txt", self.current_team.get_memory(), delimiter=",")
-
-        with open("./debug/hist_actions.txt", "w") as file:
-            for action in self._hist_actions:
-                file.write(str(action) + "\n")
-
-        for i, board in enumerate(self._hist_board):
-            np.savetxt(f"./debug/hist_board_{i}.txt", board, delimiter=",")
-
-        for i, memory in enumerate(self._hist_memory):
-            np.savetxt(f"./debug/hist_memory_{i}.txt", memory, delimiter=",")
-
-        with open("./debug/hist_orbs_pos.txt", "w") as file:
-            for orbs_pos in self._hist_orbs_pos:
-                for orb_pos in orbs_pos:
-                    file.write(str(orb_pos) + "\t")
-                file.write("\n")
-
-        with open("./debug/orbs_pos.txt", "w") as file:
-            for orb_pos in self._orbs_pos:
-                file.write(str(orb_pos) + "\n")
-
-        with open("./debug/current_player_position.txt", "w") as file:
-            file.write(str(self.current_player.position) + "\n")
 
     def _calc_filled_pits(self):
         cell_type6_num = len(np.where(self.board_state==6)[0])
