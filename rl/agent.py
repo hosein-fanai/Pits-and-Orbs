@@ -253,7 +253,7 @@ class Agent:
             case _:
                 raise NotImplemented
 
-    def run_agent_one_episode(self, env, max_steps=500, fps=None, 
+    def run_model_one_episode(self, env, max_steps=500, fps=None, 
                 deterministic_action_choice=False, 
                 print_rewards=True, return_frames=True):
         assert return_frames and env.game._pygame_mode
@@ -303,21 +303,27 @@ class Agent:
 
         return rewards, frames
 
-    def train_with_self_play(self, env, clone_model, models_bank_maxlen=5, 
-                            self_play_epochs=20, iterations=5_000_000, 
-                            log_interval=1_000, models_bank_path="./models/self-play", 
-                            algorithm="A2C"):
+    def train_model_with_self_play(self, clone_models=None, clone_models_path=None, continuing_index=1,
+                            models_bank_maxlen=5, self_play_epochs=20, iterations=5_000_000, 
+                            clear_dir=True, models_bank_path="./models/self-play", 
+                            log_interval=1_000, algorithm="A2C"):
+        assert self.model is not None
+        assert clone_models is not None or clone_models_path is not None
+
+        env = self.model.get_env()
         if not isinstance(env, SelfPlayWrapper):
             try: # if the env is a sb3-based env
                 if not env.env_is_wrapped(wrapper_class=SelfPlayWrapper, indices=0)[0]:
                     env = SelfPlayWrapper(env)
+                    self.model.set_env(env)
             except AttributeError: # if the env is not a sb3-based env
                 env = SelfPlayWrapper(env)
+                self.model.set_env(env)
 
         if not os.path.exists(models_bank_path):
             os.makedirs(models_bank_path)
             print("Created the directory:", models_bank_path)
-        else:
+        elif clear_dir:
             for item in os.listdir(models_bank_path):
                 item_path = os.path.join(models_bank_path, item)
                 os.remove(item_path)
@@ -328,13 +334,21 @@ class Agent:
 
         template_model_name = "pao_model"
 
-        clone_model_path = os.path.join(models_bank_path, template_model_name+str(0))
-        clone_model.save(clone_model_path)
-
         models_bank = deque(maxlen=models_bank_maxlen)
-        models_bank.append(clone_model_path)
 
-        for epoch in range(1, self_play_epochs+1):
+        if clone_models is not None:
+            for i, clone_model in enumerate(clone_models):
+                clone_model_path = os.path.join(models_bank_path, template_model_name+str(i))
+                clone_model.save(clone_model_path)
+                models_bank.append(clone_model_path)
+        elif clone_models_path is not None:
+            models_bank += clone_models_path
+
+        if continuing_index > 1:
+            print("Continuing self-play algorithm from epoch:", continuing_index)
+            print()
+
+        for epoch in range(continuing_index, self_play_epochs+continuing_index):
             print(f"\rWorking on epoch: #{epoch}", end='')
 
             opponent_model_idx = random.randint(0, len(models_bank)-1)
@@ -561,7 +575,7 @@ class Agent:
                 self.model.learn(total_timesteps=configs["kwargs"]["iterations"], log_interval=configs["kwargs"]["log_interval"])
             else:
                 model_copy = A2C("MlpPolicy", vec_env,  **configs["params"])
-                self.train_with_self_play(vec_env, model_copy, **configs["kwargs"])
+                self.train_model_with_self_play(vec_env, model_copy, **configs["kwargs"])
 
         vec_env.close()
         if do_save:
@@ -586,7 +600,7 @@ class Agent:
             if self_play_wrapper:
                 env.set_opponent_model(self.model)
 
-        _, frames = self.run_agent_one_episode(env, **configs["params"])
+        _, frames = self.run_model_one_episode(env, **configs["params"])
 
         env.close()
 
