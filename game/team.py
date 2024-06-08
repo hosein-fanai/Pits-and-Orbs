@@ -9,8 +9,15 @@ except ModuleNotFoundError:
 
 
 class Team:
+    """
+    
+    """
 
     def __init__(self, game, players_index):
+        """
+    
+        """
+
         self.game = game
 
         # initiate multiple players
@@ -31,37 +38,73 @@ class Team:
 
     @property
     def current_player(self):
+        """
+    
+        """
+
         return self._players[self._player_turn]
 
     @property
     def players_pos(self):
+        """
+    
+        """
+
         poses = [player.position for player in self._players]
 
         return poses
 
     @property
     def players(self):
+        """
+    
+        """
+
         return self._players
 
     @property
     def player_turn(self):
+        """
+    
+        """
+
         return self._player_turn
 
     @property
     def scores(self):
+        """
+    
+        """
+
         return len(self._filled_pits)
 
     @property
     def filled_pits(self):
+        """
+    
+        """
+
         return self._filled_pits
 
     def add_to_filled_pits(self, pit_pos):
+        """
+    
+        """
+
         self._filled_pits.append(pit_pos)
 
     def rem_from_filled_pits(self, pit_pos):
+        """
+    
+        """
+
         self._filled_pits.remove(pit_pos)
 
-    def get_filled_pits_positions(self):
+    def get_filled_pits_positions(self): # TODO: filter the pits by the memory
+        """
+    
+        """
+
         not_found_index = max(self.game.size)
 
         pits_positions = []
@@ -74,12 +117,24 @@ class Team:
         return pits_positions
 
     def update_memory(self, neighbors):
+        """
+    
+        """
+
         self._memory.update(neighbors, self.current_player.position)
 
     def get_memory(self):
+        """
+    
+        """
+
         return self._memory.get()
 
     def get_neighbors(self):
+        """
+    
+        """
+
         padded_board_state = np.zeros((self.game.size[0]+2, self.game.size[1]+2), dtype=np.uint8)
         padded_board_state[0, :] = len(self.game.CELLS)
         padded_board_state[-1, :] = len(self.game.CELLS)
@@ -95,6 +150,10 @@ class Team:
         return obs
 
     def change_player_turn(self):
+        """
+    
+        """
+
         prev_player_turn = self._player_turn
         self._player_turn = (prev_player_turn + 1) % self._players_num
 

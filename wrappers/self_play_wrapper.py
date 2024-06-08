@@ -51,7 +51,7 @@ class SelfPlayWrapper(gym.Wrapper, DummyVecEnv): # This is only for bypassing th
 
         return obs
 
-    def step(self, action: int | np.ndarray) -> tuple[np.ndarray, float, bool, dict]:
+    def step(self, action: int | np.ndarray) -> tuple[np.ndarray, float, bool, dict]: # TODO: to support more teams write a while loop to step for every other agents
         observation, reward, done, info = self.env.step(action)
 
         opponent_action, _ = self._opponent_model.predict(self.prev_observation)

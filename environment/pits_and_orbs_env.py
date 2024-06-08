@@ -19,12 +19,24 @@ except ModuleNotFoundError:
 
 
 class PitsAndOrbsEnv(gym.Env):
+    """
+    
+    """
 
-    def __init__(self, max_movements=30, render_mode="rgb_array", **kwargs): # TODO: add Env.reward_range
+    RENDER_MODES: list[str] = ["rgb_array", "human"]
+
+    def __init__(self, 
+                max_movements: int = 30, render_mode: str = "rgb_array", 
+                **kwargs): # TODO: add Env.reward_range
+        """
+    
+        """
+
         super(PitsAndOrbsEnv, self).__init__()
 
         self.max_movements = max_movements
 
+        assert render_mode in PitsAndOrbsEnv.RENDER_MODES
         self._render_mode = render_mode
         pygame_mode = True if render_mode == "human" else False
 
@@ -58,8 +70,12 @@ class PitsAndOrbsEnv(gym.Env):
             action_n = len(self.game.ACTIONS) - 1
         self.action_space = spaces.Discrete(action_n)
 
-    def _get_final_step_reward(self, done):
-        filled_all_pits = self.game._calc_filled_pits() == self.game.pit_num
+    def _get_final_step_reward(self, done: bool) -> float:
+        """
+    
+        """
+
+        filled_all_pits = (self.game._calc_filled_pits() == self.game.pit_num)
 
         if done and filled_all_pits:
             reward_type = "episode is done successfully"
@@ -67,11 +83,16 @@ class PitsAndOrbsEnv(gym.Env):
             reward_type = "episode is done unsuccessfully"
         else:
             reward_type = "episode is not done"
-        reward = self.game._reward_function(flag=reward_type)
+        
+        reward = self.game._reward_function[reward_type]
 
         return reward
 
-    def _all_players_used_max_moves(self):
+    def _all_players_used_max_moves(self) -> bool:
+        """
+    
+        """
+
         flag = True
         for team in self.game.teams:
             for player in team.players:
@@ -79,7 +100,11 @@ class PitsAndOrbsEnv(gym.Env):
 
         return flag
 
-    def _get_obs(self, obs):
+    def _get_obs(self, obs: np.ndarray) -> OrderedDict:
+        """
+    
+        """
+
         current_team = self.game.current_team
 
         return OrderedDict(
@@ -92,15 +117,27 @@ class PitsAndOrbsEnv(gym.Env):
             ([(f"player_turn", current_team.player_turn)] if self._team_size > 1 else [])
         )
 
-    def _get_info(self):
+    def _get_info(self) -> dict:
+        """
+    
+        """
+
         return self.game._get_info()
 
-    def reset(self, seed=None, options=None):
+    def reset(self, seed: any = None, options: dict = None):
+        """
+    
+        """
+
         obs, info = self.game.reset_game(seed=seed)
 
         return self._get_obs(obs)
 
-    def step(self, action):
+    def step(self, action: int) -> tuple[np.ndarray, float, bool, dict]:
+        """
+    
+        """
+
         # this is for when the player still has moves to play
         if self.game.current_player.movements < self.max_movements:
             raw_obs, reward, done, info = self.game.step_game(action, change_turn=False)
@@ -121,14 +158,19 @@ class PitsAndOrbsEnv(gym.Env):
         done = self._all_players_used_max_moves() 
         info = self.game._get_info()
 
-        reward += self.game._reward_function(flag="the player has depleted its movements")
+        reward += self.game._reward_function["the player has depleted its movements"]
         reward += self._get_final_step_reward(done)
 
         self.game._change_team_and_player_turn()
 
         return observation, reward, done, info
 
-    def render(self, mode="human"):
+    def render(self, mode: str = "human") -> np.ndarray | None:
+        """
+    
+        """
+
+        assert mode in PitsAndOrbsEnv.RENDER_MODES
         assert not(self._render_mode == "rgb_array" and mode == "human")
 
         if mode == "human":
@@ -136,11 +178,16 @@ class PitsAndOrbsEnv(gym.Env):
         elif mode == "rgb_array":
             if self.game._pygame_mode:
                 self.game._update_screen()
+
                 return self.game.get_frame()
             else:
                 return self.game._get_observation()
 
     def close(self):
+        """
+    
+        """
+
         self.game.close_game()
 
 

@@ -1,14 +1,14 @@
 # Pits and Orbs Environment as a Multi-Agent System
 ## Description
-A simple game written from scratch in Python having two modes: Terminal Printing and PyGame Window Rendering. To switch between these modes simply change this argument as follows: ```pygame_mode=True``` to have a nice PyGame window enabling you to play the game manually; this argument can be changed from ```game.pits_and_orbs.PitsAndOrbs``` constructor ```pygame_mode``` argument. Or, ```render_mode="human"``` argument from ```environment.pits_and_orbs_env.PitsAndOrbsEnv``` and ```utils.make_env``` function.
+A simple game written from scratch in Python having two modes: Terminal Printing and PyGame Window Rendering. To switch between these modes simply change the following argument: ```pygame_mode=True``` to have a nice PyGame window enabling you to play the game manually; this argument can be changed from ```game.pits_and_orbs.PitsAndOrbs``` initializer ```pygame_mode``` argument. Or, ```render_mode="human"``` argument from ```environment.pits_and_orbs_env.PitsAndOrbsEnv``` and ```utils.make_env``` function.
 
-The ```game``` directory contains files and codes only for game object and is not suitable for RL projects. On the contrary, ```environment``` directory contains gym environment version of the game which has certain properties to used for Reinforcement Learning algorithms. You can install the game with the installer located in the ```dist``` directory.
+The ```game``` directory contains files and codes only for game object and is not suitable for RL projects. On the contrary, ```environment``` directory contains gym environment version of the game which has certain properties to be used for Reinforcement Learning algorithms. You can install the game on windows with the installer located in the ```dist``` directory.
 
-The goal of the game is for the player to move the orbs to the pits in order to fill them all; that's just it. The game's properties can be set to values other than their default to have a distinct game. For example, the size of the game (its grid shape), the number of orbs (```orbs_num```), the number of pits (```pits_num```), and, even, the number of players (```player_num```) can be changed by the game's constructors. The ```player_num>1``` means the game will be a multi-agent system that the agents will try to cooperate whit eachother to fill the pits. The only thing that makes the environment a bit hard to solve is the limited number of movements that each player can take; the default value of ```max_movements``` is 30. In this environment movements is counted only through actual position changes for a player, but not the direction changes, picking orb up, or putting orb down since these are called steps in RL.
+The goal of the game is for the player to move the orbs to the pits in order to fill them all; that's just it. Be aware that the game is a non-deterministic environment since there is 10 percent chance of a random, not filling orb is thrown to a random direction into an empty cell after the player fills a pit with an orb. The game's properties can be set to values other than their default to have a distinct game. For example, the size of the game (its grid shape), the number of orbs (```orb_num```), the number of pits (```pit_num```), the number of teams (```team_num```) to devide the players, and, even, the number of players (```player_num```) can be changed by the game's initializer. The ```player_num > 1``` means the game will be a multi-agent system that the agents will try to cooperate with eachother to fill the pits, or they will be competing with eachother if the ```team_num > 1``` is true. Note that when there are more than one player in a team, it means that the players in a team need to cooperate while competing against other team(s). The only thing that makes the environment a bit hard to solve is the limited number of movements that each player can take; the default value of ```max_movements``` is 30. In this environment movements is counted only through actual position changes for a player, but not the direction changes, picking orb up, putting orb down, or throwing orb away since these are called steps in RL.
 
-The challenging part of training an agent is that this environment is partially observable which means that the agent only has access to its eight neighbors, but not the whole state board (a 2D array). A memory is implemented to appease this matter. The memory tries to update each new cells that the agent sees (it sees them because they're its neighbors). That being said, the argument ```return_obs_type``` (for the game's constructor, environment's constructor, or utils.make_env function) can take three inputs to change the output (the observation): ```"partial obs"```, ```"full state"```, or ```"neighbors"```. The first one makes the game or environment return the memory of the agent(s) from ```reset``` or ```step``` functions. The second one makes them to return the entire table (array) of the game. The third one makes them to return only the 8 neighbors of the player.
+The challenging part of training an agent is that this environment is partially observable which means that the agent only has access to its eight neighbors, but not the whole state board (a 2D array). A memory is implemented to appease this matter (```game.memory.Memory```). The memory tries to update each new cells that the agent sees (it sees them because they're its neighbors), and this memory is unique for each team. That being said, the argument ```return_obs_type``` (for the game's initializer, environment's initializer, or utils.make_env function) can take three inputs to change the output (the observation): ```"partial obs"```, ```"full state"```, or ```"neighbors"```. The first one makes the game or environment return the memory of the agent(s) from ```reset``` or ```step``` functions. The second one makes them to return the entire table (array) of the game. The third one makes them to return only the 8 neighbors of the player.
 
-The environment only allows players (or agents) to take 4 types of actions: ```Turn Right - Move Forward - Pick Orb Up - Put Orb Down```. It is obvious that ```Move Forward``` action means the player moves to the next cell in the direction that it is in without crossing the boundaries. 
+The environment only allows players (or agents) to take 5 types of actions: ```Turn Right - Move Forward - Pick Orb Up - Put Orb Down - Throw Orb Away```; the last action is only available when ```team_num > 1``` since it makes the environemtn competitive. It is obvious that ```Move Forward``` action means the player moves to the next cell in the direction that it is in without crossing the boundaries. The action ```Throw Orb Away``` means the player to throw an orb out of a pit.
 Different values for the actions are:
 | Action | Value |
 | :--- | :---: |
@@ -16,6 +16,7 @@ Different values for the actions are:
 | Move Forward | 1 |
 | Pick Orb Up | 2 |
 | Put Orb Down | 3 |
+| Throw Orb Away | 4 |
 
 Different values for player direction are:
 | Direction | Value |
@@ -41,18 +42,20 @@ The environment outputs an observation object as an OrderedDict from ```step``` 
 
 ```python
 {
-    "board": observation, # observation is an np array (depends on the return_obs_type argument)
-    f"player{i}_direction": players_direction[i], # i is the current player's index
-    f"player{i}_has_orb": players_have_orb[i], 
-    f"player{i}_position": players_have_orb[i], 
+    "board": ..., 
+    f"player{i}_movements_": ..., 
+    f"player{i}_direction": ..., 
+    f"player{i}_has_orb": ..., 
+    f"player{i}_position": ..., 
     .
     .
     .
-    "player_turn": player_turn, # indicates the next player's turn; only available while players_num > 1
+    f"filled_pits_positions": ..., 
+    "player_turn": ..., 
 }
 ```
 
-0 after last two keys mean that those are first player's information, and if there were other player, we would have more keys.
+Index ```i``` refer to the index of the player in the current team playing. This is the sharing mechanism in each team, and the other meachanism is their shared memory. The key ```board``` is a numpy array depending on the return_obs_type argument. ```Player0_movements```, ```player0_direction```, ```player0_has_orb```, and ```player0_position``` are characteristics of the player index 0 in the current team. There would be more keys if the current team has more than one player in it. ```player0_position``` is only available when the team has more than one player, the environment has more than one team, or ```return_board_type``` is set to ```positions```. ```filled_pits_positions``` is a list of all pits positions filled by the current team playing, and if a pit is not filled by the current team, its postion is returned by a constant value of grid_size. This key is only available when there are more than one team. At last, ```player turn``` determines which player has to play next (the index of the player in the current team). This key is available when there are more than one player in the current team.
 
 To build the game simply use the following:
 
@@ -69,11 +72,15 @@ If the ```pygame_with_help``` argument is set to ```True```, the PyGame window w
 
 ![](https://github.com/hosein-fanai/Pits-and-Orbs/blob/main/materials/screenshot.jpg?raw=true "A sample screenshot of the starting point of the PyGame Window mode with help showed.")
 
+## Wrappers
+In the ```./wrappers/``` directory, five distinct wrappers are implemented to appease the usage of the environment for rl algorithms. ```wrappers.steps_limit.StepsLimit``` truncates the episode if the agent exceeds a certain limit, and it can return a negative reward for that matter. The wrappers ```wrappers.onehot_observation.OnehotObservation```, ```wrappers.normalize_observation.NormalizeObservation```, and ```wrappers.concat_observation.ConcatObservation``` get a list of strings as the keys for the observation dictionary in order to know what values to manipulate. ```OnehotObservation``` onehotes the parts of the observation dictionary that their keys are passed in and doesn't take any action on other parts. ```NormalizeObservation``` normalizes the parts of the observation dictionary that their keys are passed in to a value between 0 and 1 and doesn't take any action on other parts. ```ConcatObservation``` concatenates the parts of the observation dictionary that their keys are passed in and blocks other parts. ```wrappers.self_play_wrapper.SelfPlayWrapper``` comes in handy only when the environment is competitive, and we are trying to solve it with the help of self-play algorithm implemented in the ```rl.agent.Agent``` class. This wrapper sets an agent as the opponent of the first team which helps us to interact with this environment.
+
 ## Reward Function
-Two distinct reward functions are implemented, one of which is sparse and the other isn't. By the arguments ```reward_function_type``` and ```reward_function```, the using reward function of the game can be changed. ```reward_function``` can get any function that has an argument of flag switching on all the situations a player can get into. The situations and their values for the two implemented reward functions are as follows:
+Two distinct reward functions are implemented, one of which is sparse and the other isn't. By the arguments ```reward_function_type``` and ```reward_function```, the reward function of the game can be changed. ```reward_function``` can get any dictionary having keys like the table. The situations (keys) and their values for the two implemented reward functions are as follows:
 
 | Situation Flag | Reward Function Type 0 Values | Reward Function Type 1 Values |
 | :--- | :---: | :---: |
+| cumulative reward coef | 1. | 1.
 | turned right | 0. | -0.1 |
 | tried to move forward and moved forward | 0. | 0. |
 | tried to move forward but stayed | 0. | 0. |
@@ -88,6 +95,13 @@ Two distinct reward functions are implemented, one of which is sparse and the ot
 | tried to put orb down on cell type 4 | 0. | -0.1 |
 | tried to put orb down on cell type 5 | 1. | 1. |
 | tried to put orb down on cell type 7 | 0. | -0.1 |
+| tried to throw another team's orb away in cell type 7 | 1. | 1.
+| tried to throw its team's orb away in cell type 7 | -1. | -1.
+| tried to throw orb away in cell types other than 7 | 0. | -0.1
+| the player has depleted its movements | 0. | -0.1
+| episode is done successfully | 1. | 1.
+| episode is done unsuccessfully | 0. | -1.
+| episode is not done | 0. | 0.
 
 ## Loading the Project
 To load the project use the following logic:
@@ -130,20 +144,19 @@ Then, install project's dependencies for rendering it on a PyGame window.
 python -m pip install -r requirements.txt
 ```
 
-To use RL models you should either install TensorFlow or Stable Baselines3 which uses PyTorch. As a result, TensorFlow models require you to:
+To use RL models you should either install TensorFlow or Stable Baselines3 which uses PyTorch. As a result, TensorFlow models require you to check this link (https://www.tensorflow.org/install/pip) or:
 
 ```bash
 python -m pip install tensorflow==2.10.0
 ```
 
-And stable-baselines3 requires you to:
+And stable-baselines3 requires you to firstly install PyTorch (https://pytorch.org/get-started/locally/) then:
 
 ```bash
 python -m pip install stable-baselines3==1.8.0 tensorboard
 ```
 
 ## Making the Environment
-
 There two options to make an instance of gym-environemnt of the game. First, as mentioned above, you can use ```utils.make_env``` to create a new instance of the enironment. This option gives you access to changing various game class arguments, plus a couple of observation wrappers to appease environment usages for RL algorithms. Secondly, just use ```gym.make``` api as below considering that kwargs give you access to game class arguments:
 
 ```python
@@ -189,6 +202,17 @@ If you had installed the project properly, and used the CLI the right way, you s
 ## Available Deep RL Models
 For the first phase of the project (single agent playing in the 5x5 grid with 30 movement limit and a memory of its past confrontations with its 8 neighbors), there are three different models in ```./models/``` directory and their correspondig config files are in ```./configs/```.
 
-## Sample Notebook
-There is a sample notebook in the root directory of the repository: ```./notebook.ipynb```. Further use cases are implemented there. You can check it out.
+## Sample Notebooks
+There are sample notebooks in ```./notebooks/```. Further use cases are implemented there. You can check them out.
+
+## TODO List
+Temporarily positions option is deactivated for furthur debugging.
+
+Add documentation to the entire project.
+
+Add new models.
+
+Add the support for gymnasium api.
+
+Write about rl directory in readme.md
 

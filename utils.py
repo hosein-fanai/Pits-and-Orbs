@@ -15,14 +15,19 @@ OBS_TYPES_WITHOUT_MOVEMENTS = OBS_TYPES.copy(); OBS_TYPES_WITHOUT_MOVEMENTS.remo
 
 def make_env(render_mode="rgb_array", max_movements=30, 
             size=(5, 5), orb_num=5, pit_num=5, player_num=1, team_num=1, 
-            return_obs_type="partial obs", return_board_type="array", 
-            reward_function_type='0', reward_function=None, seed=None,
+            return_obs_type="partial obs", return_board_type="array", seed=None, 
+            reward_function_type='0', reward_function=None, return_cumulative_rewards=False,
             max_steps=None, punish_on_limit=False, onehot_obs=OBS_TYPES_WITHOUT_MOVEMENTS, 
-            norm_obs=["movements"], concat_obs=["all"], num_stack=None, self_play_wrapper=False):
+            norm_obs=["movements"], concat_obs=["all"], num_stack=None, self_play_wrapper=False): # TODO: just use **kwargs for env args
+    """
+    
+    """
+
     env = PitsAndOrbsEnv(render_mode=render_mode, pygame_with_help=False, max_movements=max_movements,
                         size=size, orb_num=orb_num, pit_num=pit_num, player_num=player_num, team_num=team_num, 
                         return_obs_type=return_obs_type, return_board_type=return_board_type, 
-                        reward_function_type=reward_function_type, reward_function=reward_function, seed=seed)
+                        reward_function_type=reward_function_type, reward_function=reward_function, 
+                        return_cumulative_rewards=return_cumulative_rewards, seed=seed)
 
     if max_steps is not None:
         env = StepsLimit(env, max_steps=max_steps, punish_on_limit=punish_on_limit)
