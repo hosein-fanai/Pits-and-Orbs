@@ -6,10 +6,11 @@
 
 ## Best agent for the multi-agent cooperative environment (Second Phase)
 
-![](https://github.com/hosein-fanai/Pits-and-Orbs/blob/main/gifs/Second%phase%(two%agents%in%a%cooperative%manner).gif?raw=true "Second phase (two agents in a cooperative manner).gif")
+![](https://github.com/hosein-fanai/Pits-and-Orbs/blob/main/gifs/Second%20phase%20(two%20agents%20in%20a%20cooperative%20manner).gif?raw=true "Second phase (two agents in a cooperative manner).gif")
 
-## Best agent for the multi-agent competitive environment (Second Phase)
-![](https://github.com/hosein-fanai/Pits-and-Orbs/blob/main/gifs/Third%phase%+%self-play%algorithm%(two%agents%in%a%competitive%manner).gif?raw=true "Third phase + self-play algorithm (two agents in a competitive manner).gif")
+## Best agent for the multi-agent competitive environment (Third Phase)
+![](https://github.com/hosein-fanai/Pits-and-Orbs/blob/main/gifs/Third%20phase%20+%20self-play%20algorithm%20(two%20agents%20in%20a%20competitive%20manner).gif?raw=true "Third phase + self-play algorithm (two agents in a competitive manner).gif")
 
 # TODO List
 Refactor ./gifs directory (files' names).
+

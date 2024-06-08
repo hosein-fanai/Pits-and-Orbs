@@ -43,7 +43,7 @@ The environment outputs an observation object as an OrderedDict from ```step``` 
 ```python
 {
     "board": ..., 
-    f"player{i}_movements_": ..., 
+    f"player{i}_movements": ..., 
     f"player{i}_direction": ..., 
     f"player{i}_has_orb": ..., 
     f"player{i}_position": ..., 
